@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <!-- 한글이 깨지지 않도록 문자 인코딩 지정 -->
+    <meta charset="UTF-8">
+    <!-- 휴대폰·태블릿에서도 화면 크기에 맞게 보이도록 설정 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>타이머</title>
+    <style>
+        /* ===== 색상 값을 한곳에 모아 두어 나중에 바꾸기 쉽게 함 ===== */
+        :root {
+            --bg: black;                      /* 기본 배경색 */
+            --fg: white;                      /* 기본 글자색 */
+            --timer-color: rgb(174, 242, 166);/* 타이머 숫자 색 */
+            --end-bg: #d00000;                /* 종료 시 배경색 */
+        }
+
+        /* ===== 전체 화면 기본 스타일 ===== */
+        body {
+            margin: 0;
+            padding: 20px 10px;
+            font-family: Arial, 'Malgun Gothic', sans-serif;
+            text-align: center;
+            background-color: var(--bg);
+            color: var(--fg);
+            transition: background-color 0.3s;  /* 배경색이 부드럽게 바뀌도록 */
+            user-select: none;                  /* 버튼 연타 시 글자가 선택되는 것 방지 */
+        }
+
+        /* ===== 시간 입력 영역 ===== */
+        #setTime {
+            font-size: 40px;
+            margin-top: 40px;
+        }
+        #setTime input {
+            width: 90px;
+            font-size: 45px;
+            text-align: center;
+        }
+        /* 타이머가 도는 동안 입력칸이 비활성화된 모습 */
+        #setTime input:disabled {
+            opacity: 0.5;
+        }
+
+        /* ===== 빠른 설정(프리셋) 버튼 ===== */
+        #presets button {
+            font-size: 24px;
+            margin: 15px 4px 0;
+            padding: 4px 14px;
+        }
+
+        /* ===== 주요 조작 버튼 ===== */
+        .controls button {
+            font-size: 35px;
+            margin: 25px 6px 0;
+            padding: 4px 20px;
+            cursor: pointer;
+        }
+        button:disabled {
+            cursor: not-allowed;
+        }
+
+        /* ===== 큰 타이머 숫자 =====
+           clamp(최소, 기준, 최대): 화면 폭에 따라 크기가 자동 조절되어
+           작은 화면에서도 숫자가 잘리지 않음 */
+        #timer {
+            font-size: clamp(60px, 17vw, 270px);
+            margin-top: 10px;
+            color: var(--timer-color);
+            font-variant-numeric: tabular-nums; /* 숫자 폭을 고정해 화면이 떨리지 않게 */
+            white-space: nowrap;
+        }
+
+        /* ===== 현재 시각 / 날짜 ===== */
+        #currentTime {
+            font-size: 32px;
+            margin-top: 10px;
+            font-variant-numeric: tabular-nums;
+        }
+        #dateInfo {
+            font-size: 24px;
+            margin-top: 5px;
+        }
+
+        /* ===== 옵션(소리, 전체화면) 및 단축키 안내 ===== */
+        #options {
+            font-size: 20px;
+            margin-top: 20px;
+        }
+        #options label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        #options button {
+            font-size: 20px;
+        }
+        #help {
+            font-size: 16px;
+            margin-top: 10px;
+            opacity: 0.6;
+        }
+
+        /* ===== 시간이 끝났을 때: 배경 빨간색 + 숫자 깜빡임 ===== */
+        body.finished {
+            background-color: var(--end-bg);
+        }
+        body.finished #timer {
+            color: white;
+            animation: blink 1s steps(1) infinite;
+        }
+        @keyframes blink {
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <!-- 시간 입력 영역 -->
+    <div id="setTime">
+        <label for="hours">* 시간 :</label>
+        <input type="number" id="hours" min="0" max="23" value="0"> 시
+        <input type="number" id="minutes" min="0" max="59" value="0"> 분
+        <input type="number" id="seconds" min="0" max="59" value="0"> 초
+    </div>
+
+    <!-- 자주 쓰는 시간을 한 번에 설정하는 버튼 (data-min = 분) -->
+    <div id="presets">
+        <button data-min="1">1분</button>
+        <button data-min="3">3분</button>
+        <button data-min="5">5분</button>
+        <button data-min="10">10분</button>
+        <button data-min="15">15분</button>
+        <button data-min="30">30분</button>
+    </div>
+
+    <!-- 시작 / 일시정지 / 초기화 버튼 -->
+    <div class="controls">
+        <button id="startBtn">시작</button>
+        <button id="pauseResumeBtn" disabled>일시 정지</button>
+        <button id="resetBtn">초기화</button>
+    </div>
+
+    <!-- 남은 시간 표시 -->
+    <div id="timer">00:00:00.0</div>
+    <!-- 현재 시각과 날짜 표시 -->
+    <div id="currentTime">* 현재 시간 : 00:00:00.0</div>
+    <div id="dateInfo"></div>
+
+    <!-- 옵션 -->
+    <div id="options">
+        <label><input type="checkbox" id="soundOn" checked> 종료 알림음</label>
+        <button id="fullscreenBtn">전체 화면</button>
+    </div>
+    <div id="help">단축키: Space = 시작/일시정지/재개 · R = 초기화 · F = 전체 화면 · 입력칸에서 Enter = 시작</div>
+
+    <script>
+        // ================================================================
+        // 1. 화면 요소 가져오기 (자주 쓰는 요소를 변수에 담아 둠)
+        // ================================================================
+        const hoursInput   = document.getElementById('hours');
+        const minutesInput = document.getElementById('minutes');
+        const secondsInput = document.getElementById('seconds');
+        const timerDisplay = document.getElementById('timer');
+        const startBtn     = document.getElementById('startBtn');
+        const pauseBtn     = document.getElementById('pauseResumeBtn');
+        const resetBtn     = document.getElementById('resetBtn');
+        const soundCheck   = document.getElementById('soundOn');
+
+        // ================================================================
+        // 2. 타이머 상태 변수
+        //    state 값: 'idle'(대기) / 'running'(진행) / 'paused'(일시정지) / 'finished'(종료)
+        // ================================================================
+        let state = 'idle';
+        let endTime = 0;        // 타이머가 끝나는 "실제 시각"(밀리초)
+        let remainingMs = 0;    // 남은 시간(밀리초) - 일시정지할 때 저장
+        let tickId = null;      // setInterval 번호 (멈출 때 필요)
+        let audioCtx = null;    // 알림음을 만드는 오디오 장치
+
+        // ================================================================
+        // 3. 보조 함수들
+        // ================================================================
+
+        // 입력칸의 값을 숫자로 읽기. 비어 있거나 범위를 벗어나면 0~max로 맞춤
+        // (원래 코드는 칸을 비우면 NaN이 되어 타이머가 동작하지 않았음)
+        function readInput(input, max) {
+            const value = parseInt(input.value, 10);
+            if (isNaN(value)) return 0;
+            return Math.min(Math.max(value, 0), max);
+        }
+
+        // 입력칸 세 개를 읽어서 총 밀리초로 바꾸기
+        function getInputMs() {
+            const h = readInput(hoursInput, 23);
+            const m = readInput(minutesInput, 59);
+            const s = readInput(secondsInput, 59);
+            return (h * 3600 + m * 60 + s) * 1000;
+        }
+
+        // 밀리초 → "시:분:초.0.1초" 문자열로 바꾸기
+        // Math.ceil(올림)을 써서 시작 순간 설정한 시간이 그대로 보이고,
+        // 0.0이 되는 순간에 정확히 종료되도록 함
+        function formatTime(ms) {
+            const tenths = Math.ceil(Math.max(ms, 0) / 100);   // 0.1초 단위 개수
+            const h = Math.floor(tenths / 36000);
+            const m = Math.floor((tenths % 36000) / 600);
+            const s = Math.floor((tenths % 600) / 10);
+            const t = tenths % 10;
+            const pad = n => n.toString().padStart(2, '0');    // 한 자리 숫자 앞에 0 붙이기
+            return `${pad(h)}:${pad(m)}:${pad(s)}.${t}`;
+        }
+
+        // 큰 타이머 숫자와 브라우저 탭 제목 갱신
+        function render(ms) {
+            const text = formatTime(ms);
+            timerDisplay.textContent = text;
+            // 다른 탭을 보고 있어도 남은 시간을 탭 제목에서 확인 가능
+            document.title = (state === 'running' || state === 'paused') ? `⏱ ${text}` : '타이머';
+        }
+
+        // 현재 상태에 맞게 버튼·입력칸 활성화 여부와 글자를 바꾸기
+        function updateControls() {
+            const busy = (state === 'running' || state === 'paused');
+            startBtn.disabled = busy;                       // 진행 중엔 시작 버튼 끔
+            pauseBtn.disabled = !busy;                      // 진행 중일 때만 일시정지 가능
+            pauseBtn.textContent = (state === 'paused') ? '재개' : '일시 정지';
+            // 진행 중엔 시간 입력·프리셋을 못 바꾸게 막음
+            [hoursInput, minutesInput, secondsInput].forEach(inp => inp.disabled = busy);
+            document.querySelectorAll('#presets button').forEach(b => b.disabled = busy);
+        }
+
+        // ================================================================
+        // 4. 타이머 핵심 동작
+        // ================================================================
+
+        // 일정 간격마다 실행: "끝나는 시각 - 지금 시각"으로 남은 시간을 계산
+        // (원래 코드는 100ms마다 100씩 빼는 방식이라, 브라우저가 느려지거나
+        //  다른 탭으로 가면 시간이 점점 밀렸음. 이 방식은 항상 정확함)
+        function tick() {
+            remainingMs = endTime - Date.now();
+            if (remainingMs <= 0) {
+                finishTimer();
+            } else {
+                render(remainingMs);
+            }
+        }
+
+        // 시작 버튼
+        function startTimer() {
+            if (state === 'running' || state === 'paused') return;
+
+            const total = getInputMs();
+            if (total <= 0) return;                         // 0초면 시작하지 않음
+
+            // 알림음 장치는 사용자가 버튼을 누른 순간에 만들어야 브라우저가 허용함
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            document.body.classList.remove('finished');     // 빨간 배경 해제
+            remainingMs = total;
+            endTime = Date.now() + remainingMs;
+            state = 'running';
+            tickId = setInterval(tick, 50);                 // 0.05초마다 확인 (표시가 매끄러움)
+            tick();                                         // 누르자마자 바로 표시
+            updateControls();
+        }
+
+        // 일시정지 / 재개 버튼
+        function pauseResumeTimer() {
+            if (state === 'running') {
+                // 일시정지: 남은 시간을 저장하고 반복을 멈춤
+                remainingMs = endTime - Date.now();
+                clearInterval(tickId);
+                state = 'paused';
+                render(remainingMs);
+            } else if (state === 'paused') {
+                // 재개: 저장해 둔 남은 시간으로 새 종료 시각을 계산
+                endTime = Date.now() + remainingMs;
+                state = 'running';
+                tickId = setInterval(tick, 50);
+            }
+            updateControls();
+        }
+
+        // 시간이 다 됐을 때
+        function finishTimer() {
+            clearInterval(tickId);
+            state = 'finished';
+            remainingMs = 0;
+            render(0);                                      // 정확히 00:00:00.0 표시
+            document.body.classList.add('finished');        // 빨간 배경 + 깜빡임
+            playAlarm();
+            updateControls();
+        }
+
+        // 초기화 버튼
+        // 입력한 시간은 그대로 남겨 두어, 같은 시간으로 바로 다시 시작할 수 있음
+        function resetTimer() {
+            clearInterval(tickId);
+            state = 'idle';
+            remainingMs = 0;
+            document.body.classList.remove('finished');
+            render(getInputMs());                           // 입력된 시간을 미리 보여 줌
+            updateControls();
+        }
+
+        // ================================================================
+        // 5. 종료 알림음 (삐-삐-삐 3번)
+        //    별도 소리 파일 없이 브라우저에서 직접 소리를 만듦
+        // ================================================================
+        function playAlarm() {
+            if (!soundCheck.checked || !audioCtx) return;
+            for (let i = 0; i < 3; i++) {
+                const osc  = audioCtx.createOscillator();   // 소리 발생기
+                const gain = audioCtx.createGain();         // 음량 조절기
+                osc.frequency.value = 880;                  // 음 높이(Hz)
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);         // 스피커로 연결
+                const t = audioCtx.currentTime + i * 0.4;   // 0.4초 간격
+                gain.gain.setValueAtTime(0.3, t);
+                gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3); // 점점 작아지게
+                osc.start(t);
+                osc.stop(t + 0.3);
+            }
+        }
+
+        // ================================================================
+        // 6. 전체 화면 켜기/끄기 (교실 TV·프로젝터에 띄울 때 편리)
+        // ================================================================
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // ================================================================
+        // 7. 현재 시각과 날짜 표시 (0.1초마다 갱신)
+        // ================================================================
+        function updateCurrentTime() {
+            const now = new Date();
+            const pad = n => n.toString().padStart(2, '0');
+            const tenth = Math.floor(now.getMilliseconds() / 100);   // 0.1초 자리
+            document.getElementById('currentTime').textContent =
+                `* 현재 시간 : ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${tenth}`;
+
+            const dayOfWeek = ['일', '월', '화', '수', '목', '금', '토'][now.getDay()];
+            document.getElementById('dateInfo').textContent =
+                `${now.getFullYear()}년 ${pad(now.getMonth() + 1)}월 ${pad(now.getDate())}일 (${dayOfWeek})`;
+        }
+        setInterval(updateCurrentTime, 100);
+        updateCurrentTime();   // 페이지를 열자마자 바로 표시
+
+        // ================================================================
+        // 8. 버튼·입력칸·키보드에 동작 연결
+        // ================================================================
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseResumeTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+        // 프리셋 버튼: 누르면 해당 분으로 입력칸을 채움
+        document.querySelectorAll('#presets button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                hoursInput.value = 0;
+                minutesInput.value = btn.dataset.min;
+                secondsInput.value = 0;
+                resetTimer();      // 화면에 바로 미리 보여 주기
+            });
+        });
+
+        // 대기 중에 입력칸 숫자를 바꾸면 큰 화면에 바로 미리 보여 줌
+        [hoursInput, minutesInput, secondsInput].forEach(inp => {
+            inp.addEventListener('input', () => {
+                if (state === 'idle' || state === 'finished') resetTimer();
+            });
+        });
+
+        // 버튼을 누른 뒤 포커스를 해제 → Space 단축키가 버튼을 두 번 누르는 문제 방지
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => btn.blur());
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', (e) => {
+            // 입력칸에서는 Enter만 '시작'으로 쓰고, 나머지 키는 숫자 입력용으로 둠
+            if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+                if (e.key === 'Enter') { e.target.blur(); startTimer(); }
+                return;
+            }
+            if (e.code === 'Space') {
+                e.preventDefault();                          // 화면 스크롤 방지
+                if (state === 'running' || state === 'paused') pauseResumeTimer();
+                else startTimer();
+            } else if (e.key === 'r' || e.key === 'R' || e.key === 'ㄱ') {
+                resetTimer();                                // 한글 입력 상태(ㄱ)도 인식
+            } else if (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') {
+                toggleFullscreen();
+            }
+        });
+
+        // 처음 열었을 때 버튼 상태 정리
+        updateControls();
+    </script>
+</body>
+</html>
