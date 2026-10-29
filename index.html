@@ -222,7 +222,21 @@
             cursor: pointer;
         }
         .mode-switch button.active { background: var(--fg); color: var(--bg); font-weight: 700; }
-        .mode-switch button:disabled:not(.active) { opacity: 0.4; cursor: not-allowed; }
+        /* 다른 모드가 뒤에서 돌아가는 중이면 그 버튼 오른쪽 위에 작은 점 표시
+           (글자를 바꾸면 버튼 폭이 달라져 스위치가 흔들리므로 점으로만 알림) */
+        .mode-switch button { position: relative; }
+        .mode-switch .badge {
+            position: absolute;
+            top: 0.3em;
+            right: 0.5em;
+            width: 0.45em;
+            height: 0.45em;
+            border-radius: 50%;
+            display: none;
+        }
+        .mode-switch button.bg-running  .badge { display: block; background: var(--ok); animation: breathe 1.6s ease-in-out infinite; }
+        .mode-switch button.bg-paused   .badge { display: block; background: var(--muted); }
+        .mode-switch button.bg-finished .badge { display: block; background: var(--danger); animation: blink 1s steps(1) infinite; }
 
         /* =================================================================
            5. 큰 타이머 숫자 + 진행 막대 + 초과 시간
@@ -446,6 +460,13 @@
         body.hide-ui .mode-switch,
         body.hide-ui .controls,
         body.hide-ui #help { opacity: 0; pointer-events: none; }
+        /* 마우스를 쓰는 기기에선 숨겨져 있어도 그 자리를 클릭하면 바로 눌리게 함
+           (터치 기기는 첫 터치로 버튼을 다시 보여 줌 → 안 보이는 버튼을 실수로 누르는 것 방지) */
+        @media (hover: hover) {
+            body.hide-ui .topbar,
+            body.hide-ui .mode-switch,
+            body.hide-ui .controls { pointer-events: auto; }
+        }
 
         /* =================================================================
            9. 기기별 맞춤
@@ -559,8 +580,9 @@
     <main>
         <!-- ===== 모드 전환 ===== -->
         <nav class="mode-switch">
-            <button data-mode="timer" class="active">타이머</button>
-            <button data-mode="stopwatch">스톱워치</button>
+            <!-- .badge = 뒤에서 돌아가는 중일 때 보이는 작은 점 -->
+            <button data-mode="timer" class="active">타이머<span class="badge"></span></button>
+            <button data-mode="stopwatch">스톱워치<span class="badge"></span></button>
         </nav>
 
         <!-- ===== 큰 숫자 / 진행 막대 / 초과 시간 ===== -->
@@ -675,13 +697,19 @@
             endTime: 0,        // 타이머: 끝나는 실제 시각
             startTime: 0,      // 스톱워치: 측정을 시작한 기준 시각
             savedMs: 0,        // 일시정지할 때 남은 시간(타이머) 또는 지난 시간(스톱워치)
-            tickId: null,      // setInterval 번호
             theme: DEFAULT_THEME,
             presets: [...DEFAULT_PRESETS], // 프리셋 목록(초 단위)
             editingPresets: false,         // 프리셋 편집 중인지
         };
         // 진행·일시정지 중인지 (시간 설정을 막아야 하는 상태)
         const isBusy = () => S.state === 'running' || S.state === 'paused';
+
+        // 타이머와 스톱워치는 각자 따로 돌아감.
+        // 지금 화면에 보이는 모드의 값은 S에, 화면에 안 보이는(뒤에서 도는) 모드의 값은
+        // 여기에 보관해 두었다가 모드를 바꿀 때 서로 맞바꿈
+        const MODE_FIELDS = ['state', 'totalMs', 'endTime', 'startTime', 'savedMs'];
+        const stored = { timer: null, stopwatch: null };
+        const otherMode = () => (S.mode === 'timer' ? 'stopwatch' : 'timer');
 
         // =================================================================
         // 4. 시간 계산·표시 형식 함수
@@ -846,11 +874,9 @@
             el.clearBtn.hidden   = !(isTimer && st === 'idle');
             el.clearBtn.disabled = getInputMs() === 0;
 
-            // 진행 중엔 모드 전환·시간 입력을 막음
-            modeButtons.forEach(btn => {
-                btn.disabled = busy;
-                btn.classList.toggle('active', btn.dataset.mode === S.mode);
-            });
+            // 모드 전환은 언제든 가능 (지금 보고 있는 모드만 강조)
+            modeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.mode === S.mode));
+            // 진행 중엔 시간 입력만 막음
             timeInputs.forEach(input => input.disabled = busy);
 
             renderPresets();   // 지금 시간과 같은 프리셋 강조 표시를 갱신
@@ -861,29 +887,43 @@
             S.state = state;
             document.body.dataset.state = state;   // CSS의 상태별 스타일이 적용됨
             updateControls();
-            keepScreenOn(state !== 'idle');
+            // 화면 꺼짐 방지: 지금 모드든 뒤에서 도는 모드든 하나라도 쓰는 중이면 켬
+            const other = stored[otherMode()];
+            keepScreenOn(state !== 'idle' || (other !== null && other.state !== 'idle'));
             wakeUI();
             render();
         }
 
+        // 모드 버튼의 작은 점: 화면에 안 보이는 모드가 뒤에서 어떤 상태인지 표시
+        function updateModeBadges() {
+            modeButtons.forEach(btn => {
+                const bg = btn.dataset.mode === S.mode ? null : stored[btn.dataset.mode];
+                const st = bg ? bg.state : 'idle';
+                btn.classList.toggle('bg-running',  st === 'running');
+                btn.classList.toggle('bg-paused',   st === 'paused');
+                btn.classList.toggle('bg-finished', st === 'finished');
+            });
+        }
+
         // =================================================================
-        // 7. 반복 실행(틱)
+        // 7. 반복 실행(틱) - 페이지가 열려 있는 동안 0.05초마다 항상 실행
         //    "끝나는 시각 - 지금 시각"으로 계산하므로 다른 탭에 가 있어도 정확함
         // =================================================================
         function tick() {
+            // (1) 지금 보고 있는 타이머가 끝났는지
             if (S.mode === 'timer' && S.state === 'running' && S.endTime - Date.now() <= 0) {
                 finish();
             }
+            // (2) 스톱워치를 보는 동안 뒤에서 돌던 타이머가 끝났는지
+            const bgTimer = stored.timer;
+            if (S.mode !== 'timer' && bgTimer && bgTimer.state === 'running'
+                && bgTimer.endTime - Date.now() <= 0) {
+                bgTimer.state = 'finished';
+                playAlarm();
+                showToast('⏰ 타이머 시간이 끝났어요');
+            }
+            updateModeBadges();
             render();   // 종료 후에도 계속 돌면서 "시간 초과"를 갱신
-        }
-        function startTicking() {
-            stopTicking();
-            S.tickId = setInterval(tick, TICK_MS);
-            tick();     // 누르자마자 바로 표시
-        }
-        function stopTicking() {
-            clearInterval(S.tickId);
-            S.tickId = null;
         }
 
         // =================================================================
@@ -903,12 +943,10 @@
             S.editingPresets = false;               // 시작하면 프리셋 편집은 끝냄
             prepareAudio();
             setState('running');
-            startTicking();
         }
 
         function pause() {
             S.savedMs = currentMs();                // 상태를 바꾸기 '전'에 시간 저장
-            stopTicking();
             setState('paused');
         }
 
@@ -917,18 +955,16 @@
             if (S.mode === 'timer') S.endTime   = Date.now() + S.savedMs;
             else                    S.startTime = Date.now() - S.savedMs;
             setState('running');
-            startTicking();
         }
 
         function finish() {
-            setState('finished');                   // 틱은 멈추지 않음 → 초과 시간 계속 표시
+            setState('finished');                   // 틱은 계속 돌면서 초과 시간을 표시
             playAlarm();
         }
 
         // ↺ 설정 시간으로: 타이머를 멈추고 설정해 둔 시간으로 되돌림 (설정값은 그대로)
         //   스톱워치에선 0으로 되돌림
         function reset() {
-            stopTicking();
             setState('idle');
         }
 
@@ -962,7 +998,6 @@
                 S.totalMs = delta;
                 S.endTime = Date.now() + delta;
                 setState('running');
-                startTicking();
                 return;
             } else if (S.state === 'idle') {
                 adjustInput(delta);                 // 대기 중이면 설정 시간을 조절
@@ -971,11 +1006,23 @@
             render();
         }
 
+        // 타이머 ↔ 스톱워치 전환 (언제든 가능)
+        // 지금 모드의 진행 상황은 보관해 두고, 바꿀 모드의 진행 상황을 꺼내 옴
+        // → 타이머를 켜 둔 채 스톱워치를 봐도 타이머는 뒤에서 계속 흘러감
         function setMode(mode) {
-            if (isBusy()) return;
+            if (mode === S.mode) return;
+            // (1) 지금 모드의 값을 보관함에 넣기
+            const current = {};
+            MODE_FIELDS.forEach(k => current[k] = S[k]);
+            stored[S.mode] = current;
+            // (2) 바꿀 모드의 값을 꺼내기 (처음이면 대기 상태로 시작)
+            const next = stored[mode] || { state: 'idle', totalMs: 0, endTime: 0, startTime: 0, savedMs: 0 };
+            stored[mode] = null;
+            Object.assign(S, next);
             S.mode = mode;
             document.body.dataset.mode = mode;
-            reset();
+            setState(S.state);                      // 꺼내 온 상태로 화면·버튼 갱신
+            updateModeBadges();
         }
 
         // =================================================================
@@ -1224,11 +1271,35 @@
             clearTimeout(hideTimer);
             if (S.state === 'running') {
                 hideTimer = setTimeout(() => {
+                    // 마우스가 버튼 영역 위에 올라가 있으면 숨기지 않고 조금 뒤 다시 확인
+                    // (마우스 기기에서만. 휴대폰은 마지막으로 누른 버튼을 계속 ':hover'로 취급하므로 제외)
+                    if (window.matchMedia('(hover: hover)').matches &&
+                        document.querySelector('.topbar:hover, .mode-switch:hover, .controls:hover')) {
+                        wakeUI();
+                        return;
+                    }
                     document.body.classList.add('hide-ui');
                     el.themeMenu.hidden = true;     // 열려 있던 색상 메뉴도 닫기
                 }, HIDE_UI_DELAY);
             }
         }
+        // 터치 기기: 버튼이 숨겨진 상태에서의 첫 터치는 "버튼 다시 보여 주기"로만 쓰고,
+        // 그 터치로 생기는 클릭은 무시함 (안 보이는 일시정지 버튼 등을 실수로 누르지 않게)
+        let swallowClick = false;
+        document.addEventListener('pointerdown', (e) => {
+            if (e.pointerType !== 'mouse' && document.body.classList.contains('hide-ui')) {
+                swallowClick = true;
+                setTimeout(() => { swallowClick = false; }, 700);  // 클릭이 안 생기면 잠시 뒤 해제
+            }
+        }, { capture: true });   // capture: 다른 처리보다 먼저 실행 (숨김이 풀리기 전에 확인)
+        document.addEventListener('click', (e) => {
+            if (swallowClick) {
+                swallowClick = false;
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }, { capture: true });
+
         ['mousemove', 'pointerdown', 'touchstart'].forEach(evt =>
             document.addEventListener(evt, wakeUI, { passive: true }));
 
@@ -1388,6 +1459,7 @@
         updateClock();
         setInterval(updateClock, 100);
         setState('idle');                   // 버튼·화면 초기 정리
+        setInterval(tick, TICK_MS);         // 타이머·스톱워치 반복 실행 시작
     </script>
 </body>
 </html>
