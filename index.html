@@ -190,11 +190,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;           /* 위에서부터 쌓음 (모드 스위치를 위에 고정하기 위해) */
             gap: clamp(10px, 2.2vh, 1.3rem);
             padding: 0 1rem 1.2rem;
             min-width: 0;
         }
+        /* 모드 스위치는 항상 같은 자리(맨 위)에 고정.
+           숫자~버튼 묶음만 남은 공간의 가운데에 오도록 위·아래 여백을 자동으로 나눔
+           → 타이머↔스톱워치 전환 때 스위치가 움직이지 않아 연속으로 눌러도 잘 눌림 */
+        main > .mode-switch { flex: none; margin-top: clamp(4px, 1vh, 0.6rem); }
+        main > .display     { margin-top: auto; }
+        main > .controls    { margin-bottom: auto; }
 
         /* =================================================================
            4. 모드 전환 스위치 (타이머 / 스톱워치)
@@ -486,13 +492,19 @@
                     "display mode"
                     "display setup"
                     "display controls";
-                align-content: center;
+                /* 가로 화면에서도 스위치는 오른쪽 맨 위, 버튼은 오른쪽 맨 아래에 고정
+                   (가운데 줄만 늘었다 줄었다 함) */
+                grid-template-rows: auto 1fr auto;
+                align-content: stretch;
+                padding-top: 0.4rem;
                 align-items: center;
                 justify-items: center;
                 column-gap: 1.2rem;
                 row-gap: 0.5rem;
                 padding: 0 1rem 0.5rem;
             }
+            /* 2단 배치에선 자동 여백 대신 칸 정렬을 쓰므로 여백을 없앰 */
+            main > .display, main > .controls { margin: 0; }
             .display     { grid-area: display; }
             .mode-switch { grid-area: mode; }
             #setup       { grid-area: setup; gap: 0.4rem; }
