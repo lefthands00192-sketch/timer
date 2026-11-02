@@ -201,6 +201,9 @@
         main > .mode-switch { flex: none; margin-top: clamp(4px, 1vh, 0.6rem); }
         main > .display     { margin-top: auto; }
         main > .controls    { margin-bottom: auto; }
+        /* 구간 기록 목록이 보일 땐 목록이 묶음의 맨 아래가 되도록 여백을 옮김 */
+        body.has-laps main > .controls { margin-bottom: 0; }
+        body.has-laps main > #laps     { margin-bottom: auto; }
 
         /* =================================================================
            4. 모드 전환 스위치 (타이머 / 스톱워치)
@@ -265,6 +268,15 @@
             white-space: nowrap;
             transition: color 0.3s;
         }
+        /* 큰 숫자 사이의 단위 글자(시간·분·초): 숫자보다 작게, 살짝 띄워서 */
+        #timer .u {
+            font-size: 0.36em;
+            font-weight: 600;
+            letter-spacing: 0;
+            margin: 0 0.7em 0 0.1em;              /* 단위 글자 뒤에 다음 숫자와의 간격 */
+            opacity: 0.8;
+        }
+        #timer .u:last-child { margin-right: 0; }   /* 맨 끝 "초" 뒤엔 여백 없음 */
 
         /* 진행 막대: 남은 시간 비율만큼 채워짐
            오른쪽 끝을 기준으로 두어서, 시간이 지나면 왼쪽부터 비워지며 오른쪽으로 줄어듦 */
@@ -344,7 +356,28 @@
 
         /* ----- 프리셋 버튼들 ----- */
         .preset-area { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
-        #presets, .preset-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
+        #presets, #examPresets, .preset-tools { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
+        /* 탭 하나에 해당하는 프리셋 묶음 */
+        .preset-panel { display: flex; flex-direction: column; align-items: center; gap: 0.45rem; }
+
+        /* [자주 쓰는 시간] [모의고사] 탭 */
+        .preset-tabs {
+            display: inline-flex;
+            padding: 0.15rem;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+        }
+        .tab {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 0.3em 1em;
+            border-radius: 999px;
+            cursor: pointer;
+        }
+        .tab.active { background: var(--line); color: var(--fg); font-weight: 700; }
         .chip {
             min-height: 2.2em;                     /* 손가락으로 누르기 쉬운 크기 */
             font-size: 0.95rem;
@@ -362,6 +395,26 @@
         .chip .x { margin-left: 0.3em; color: var(--danger); font-weight: 700; }
         /* "프리셋 저장 / 편집" 같은 관리용 버튼은 점선으로 구분 */
         .chip.ghost { color: var(--muted); border-style: dashed; font-size: 0.85rem; }
+        /* OMR 5분 제외 버튼: 켜지면 노란색으로 채워짐 */
+        .chip.omr { border-style: dashed; }
+        .chip.omr[aria-pressed="true"] {
+            background: var(--warn);
+            color: var(--on-warn);
+            border-color: transparent;
+            border-style: solid;
+            font-weight: 700;
+        }
+
+        /* 큰 숫자 위의 설명 글자 (예: "국어 80분 · OMR 작성 5분 제외") */
+        #caption {
+            margin-bottom: 0.4rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: inherit;
+            opacity: 0.85;
+            text-align: center;
+        }
+        #caption:empty { display: none; }   /* 설명이 없으면 자리도 차지하지 않음 */
 
         /* =================================================================
            7. 조작 버튼
@@ -391,6 +444,49 @@
             .chip:hover:not(.active) { border-color: var(--ok); color: var(--ok); }
             .step:hover { color: var(--fg); border-color: var(--ok); }
         }
+
+        /* =================================================================
+           스톱워치 구간 기록 목록
+           목록이 길어져도 화면을 밀어내지 않도록 높이를 정해 두고 안에서 스크롤
+           ================================================================= */
+        #laps { width: min(100%, 34rem); flex: none; }
+        .laps-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.3rem 0.3rem;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        /* 구간 번호 / 구간 시간 / 전체 시간 세 칸 */
+        .lap-row {
+            display: grid;
+            grid-template-columns: 4em 1fr 1fr;
+            gap: 0.5rem;
+            padding: 0.35rem 0.3rem;
+            font-variant-numeric: tabular-nums;
+        }
+        .lap-cols { color: var(--muted); font-size: 0.75rem; padding-top: 0; padding-bottom: 0.2rem; }
+        .lap-cols span:last-child, .lap-row .total { text-align: right; }
+        #lapList {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            max-height: min(28vh, 16rem);
+            overflow-y: auto;
+            border-top: 1px solid var(--line);
+        }
+        #lapList li { border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+        #lapList .num   { color: var(--muted); }
+        #lapList .split { font-weight: 700; white-space: nowrap; }
+        #lapList .total { color: var(--muted); white-space: nowrap; }
+        /* 가장 빠른 구간은 초록, 가장 느린 구간은 빨강 */
+        #lapList li.best  .split { color: var(--ok); }
+        #lapList li.worst .split { color: var(--danger); }
+        .tag { margin-left: 0.4em; font-size: 0.75em; font-weight: 600; }
+        /* 방금 기록한 구간이 잠깐 반짝임 */
+        #lapList li.new { animation: flash 0.6s ease-out; }
+        @keyframes flash { from { background: var(--line); } to { background: transparent; } }
 
         #help { margin: 0; color: var(--muted); font-size: 0.75rem; text-align: center; line-height: 1.8; }
         kbd {
@@ -433,6 +529,7 @@
 
         /* 스톱워치 모드에선 입력칸·진행 막대가 필요 없음 */
         body[data-mode="stopwatch"] #setup,
+        body[data-mode="stopwatch"] #caption,
         body[data-mode="stopwatch"] .progress { display: none; }
 
         /* 일시정지: 숫자가 천천히 깜빡여 멈춘 상태임을 알려 줌 */
@@ -494,7 +591,8 @@
         @media (max-width: 480px) and (max-height: 700px) {
             main { gap: 0.55rem; padding-bottom: 0.6rem; }
             #setup { gap: 0.5rem; }
-            .preset-area, #presets, .preset-tools { gap: 0.35rem; }
+            .preset-area, .preset-panel, #presets, #examPresets, .preset-tools { gap: 0.35rem; }
+            #caption { font-size: 1.1rem; margin-bottom: 0.2rem; }
             .chip { min-height: 1.9em; padding: 0.15em 0.7em; font-size: 0.85rem; }
             .step { padding: 0.1em 0; font-size: 0.75rem; }
             .unit { font-size: 0.85rem; }
@@ -505,6 +603,8 @@
         /* 높이가 낮은 화면(휴대폰을 가로로 눕힌 경우)
            → 왼쪽엔 큰 숫자, 오른쪽엔 입력칸·버튼을 두는 2단 배치 */
         @media (orientation: landscape) and (max-height: 520px) {
+            /* 화면 높이를 딱 맞게 고정 → 내용이 많아도 화면 밖으로 늘어나지 않음 */
+            body { height: 100vh; height: 100dvh; }
             .topbar { padding: 0.3rem 1rem; font-size: 0.85rem; }
             main {
                 display: grid;
@@ -515,7 +615,10 @@
                     "display controls";
                 /* 가로 화면에서도 스위치는 오른쪽 맨 위, 버튼은 오른쪽 맨 아래에 고정
                    (가운데 줄만 늘었다 줄었다 함) */
-                grid-template-rows: auto 1fr auto;
+                /* minmax(0, 1fr): 가운데 칸 내용(구간 기록 목록 등)이 길어도 칸이 늘어나지 않고
+                   그 안에서 스크롤되게 함 */
+                grid-template-rows: auto minmax(0, 1fr) auto;
+                min-height: 0;
                 align-content: stretch;
                 padding-top: 0.4rem;
                 align-items: center;
@@ -525,7 +628,15 @@
                 padding: 0 1rem 0.5rem;
             }
             /* 2단 배치에선 자동 여백 대신 칸 정렬을 쓰므로 여백을 없앰 */
-            main > .display, main > .controls { margin: 0; }
+            main > .display, main > .controls,
+            body.has-laps main > #laps { margin: 0; }
+            /* 구간 기록 목록은 오른쪽 가운데 칸(시간 설정 자리)에 표시 */
+            #laps { grid-area: setup; align-self: stretch; display: flex; flex-direction: column; min-height: 0; }
+            #laps[hidden] { display: none; }
+            #lapList { max-height: none; flex: 1; min-height: 0; }
+            .laps-head { font-size: 0.75rem; padding-bottom: 0.15rem; }
+            .lap-row { padding: 0.2rem 0.3rem; }
+            #lapList li { font-size: 0.8rem; }
             .display     { grid-area: display; }
             .mode-switch { grid-area: mode; }
             #setup       { grid-area: setup; gap: 0.4rem; }
@@ -539,6 +650,9 @@
             .unit { font-size: 0.75rem; }
             .chip  { min-height: 1.9em; padding: 0.1em 0.65em; font-size: 0.8rem; }
             .btn   { font-size: 1rem; min-width: 0; padding: 0.4em 0.7em; }
+            .tab   { font-size: 0.75rem; padding: 0.2em 0.8em; }
+            .preset-area, .preset-panel, #presets, #examPresets, .preset-tools { gap: 0.3rem; }
+            #caption { font-size: 0.95rem; margin-bottom: 0.2rem; }
             #overtime { font-size: 1.2rem; }
         }
 
@@ -587,7 +701,9 @@
 
         <!-- ===== 큰 숫자 / 진행 막대 / 초과 시간 ===== -->
         <section class="display" id="display">
-            <div id="timer">00:00.0</div>
+            <!-- 모의고사 과목·OMR 제외 여부 설명 (해당될 때만 보임) -->
+            <div id="caption"></div>
+            <div id="timer">00<span class="u">분</span>00.0<span class="u">초</span></div>
             <div class="progress"><div id="progressBar"></div></div>
             <div id="overtime"></div>
         </section>
@@ -618,13 +734,29 @@
                 </div>
             </div>
 
-            <!-- 프리셋: 목록은 자바스크립트가 저장된 값으로 만들어 넣음 -->
+            <!-- 프리셋: [자주 쓰는 시간] / [모의고사] 두 탭으로 나눔
+                 버튼 목록은 자바스크립트가 만들어 넣음 -->
             <div class="preset-area">
-                <div id="presets"></div>
-                <div class="preset-tools">
-                    <button id="savePresetBtn" class="chip ghost">＋ 지금 시간을 프리셋으로</button>
-                    <button id="editPresetBtn" class="chip ghost">✎ 편집</button>
-                    <button id="restorePresetBtn" class="chip ghost" hidden>기본 프리셋으로</button>
+                <div class="preset-tabs">
+                    <button class="tab active" data-tab="mine">자주 쓰는 시간</button>
+                    <button class="tab" data-tab="exam">모의고사</button>
+                </div>
+
+                <!-- 탭 1: 자주 쓰는 시간 (직접 추가·삭제 가능) -->
+                <div class="preset-panel" id="minePanel">
+                    <div id="presets"></div>
+                    <div class="preset-tools">
+                        <button id="savePresetBtn" class="chip ghost">＋ 지금 시간을 프리셋으로</button>
+                        <button id="editPresetBtn" class="chip ghost">✎ 편집</button>
+                        <button id="restorePresetBtn" class="chip ghost" hidden>기본 프리셋으로</button>
+                    </div>
+                </div>
+
+                <!-- 탭 2: 모의고사 과목별 실제 시험 시간 + OMR 5분 제외 -->
+                <div class="preset-panel" id="examPanel" hidden>
+                    <div id="examPresets"></div>
+                    <!-- aria-pressed: 켜짐(true)/꺼짐(false) 상태 -->
+                    <button id="omrBtn" class="chip omr" aria-pressed="false">OMR 작성 5분 제외</button>
                 </div>
             </div>
         </section>
@@ -632,6 +764,8 @@
         <!-- ===== 조작 버튼 (상태에 따라 필요한 것만 보임) ===== -->
         <section class="controls">
             <button id="mainBtn"  class="btn primary">시작</button>
+            <!-- 스톱워치 진행 중에만 보임: 누른 순간의 시간을 목록에 기록 -->
+            <button id="lapBtn"   class="btn">⚑ 구간 기록</button>
             <button id="minusBtn" class="btn">−1분</button>
             <button id="plusBtn"  class="btn">+1분</button>
             <!-- 설정해 둔 시간으로 되돌림 (설정값은 그대로) → 같은 시간으로 다시 쓰기 -->
@@ -640,8 +774,18 @@
             <button id="clearBtn" class="btn">✕ 시간 지우기</button>
         </section>
 
+        <!-- ===== 스톱워치 구간 기록 목록 (기록이 있을 때만 보임) ===== -->
+        <section id="laps" hidden>
+            <div class="laps-head">
+                <span id="lapCount">구간 기록</span>
+                <button id="copyLapsBtn" class="chip ghost">기록 복사</button>
+            </div>
+            <div class="lap-row lap-cols"><span>구간</span><span>구간 시간</span><span>전체 시간</span></div>
+            <ol id="lapList"></ol>
+        </section>
+
         <p id="help">
-            <kbd>Space</kbd> 시작·일시정지 &nbsp; <kbd>↑</kbd><kbd>↓</kbd>·마우스 휠 시간 조절 &nbsp;
+            <kbd>Space</kbd> 시작·일시정지 &nbsp; <kbd>L</kbd> 구간 기록 &nbsp; <kbd>↑</kbd><kbd>↓</kbd>·마우스 휠 시간 조절 &nbsp;
             <kbd>+</kbd><kbd>−</kbd> 1분 &nbsp; <kbd>R</kbd> 설정 시간으로 &nbsp;
             <kbd>Del</kbd> 시간 지우기 &nbsp; <kbd>F</kbd> 전체 화면
         </p>
@@ -664,6 +808,18 @@
         const DEFAULT_PRESETS = [60, 180, 300, 600, 900, 1800, 3000]; // 기본 프리셋(초 단위)
         const DEFAULT_THEME   = 'night';                           // 기본 색상 테마
 
+        // 모의고사 과목별 실제 시험 시간(분)
+        // 과목을 더하거나 시간을 바꾸려면 이 목록만 고치면 됨
+        const EXAM_PRESETS = [
+            { name: '국어',            min: 80 },
+            { name: '수학',            min: 100 },
+            { name: '영어',            min: 70 },
+            { name: '영어(듣기 제외)', min: 45 },
+            { name: '한국사',          min: 30 },
+            { name: '통사·통과',       min: 40 },
+        ];
+        const OMR_SEC = 5 * 60;                                    // OMR 카드 작성 시간(초)
+
         // =================================================================
         // 2. 화면 요소 가져오기
         // =================================================================
@@ -673,8 +829,12 @@
             timer: $('timer'), display: $('display'), setup: $('setup'),
             progressBar: $('progressBar'), overtime: $('overtime'),
             mainBtn: $('mainBtn'), minusBtn: $('minusBtn'), plusBtn: $('plusBtn'),
+            lapBtn: $('lapBtn'), laps: $('laps'), lapList: $('lapList'),
+            lapCount: $('lapCount'), copyLapsBtn: $('copyLapsBtn'),
             backBtn: $('backBtn'), clearBtn: $('clearBtn'),
-            presets: $('presets'), savePresetBtn: $('savePresetBtn'),
+            presets: $('presets'), examPresets: $('examPresets'), omrBtn: $('omrBtn'),
+            minePanel: $('minePanel'), examPanel: $('examPanel'), caption: $('caption'),
+            savePresetBtn: $('savePresetBtn'),
             editPresetBtn: $('editPresetBtn'), restorePresetBtn: $('restorePresetBtn'),
             soundOn: $('soundOn'), fullscreenBtn: $('fullscreenBtn'),
             themeBtn: $('themeBtn'), themeMenu: $('themeMenu'), themeColorMeta: $('themeColorMeta'),
@@ -684,6 +844,7 @@
         const timeInputs  = [el.hours, el.minutes, el.seconds];
         const modeButtons = document.querySelectorAll('.mode-switch button');
         const swatches    = document.querySelectorAll('.swatch');
+        const presetTabs  = document.querySelectorAll('.preset-tabs .tab');
 
         // =================================================================
         // 3. 상태(현재 상황)를 한 객체에 모아 관리
@@ -697,9 +858,16 @@
             endTime: 0,        // 타이머: 끝나는 실제 시각
             startTime: 0,      // 스톱워치: 측정을 시작한 기준 시각
             savedMs: 0,        // 일시정지할 때 남은 시간(타이머) 또는 지난 시간(스톱워치)
+            laps: [],          // 스톱워치: 구간 기록을 누른 순간의 전체 시간(밀리초) 목록
             theme: DEFAULT_THEME,
             presets: [...DEFAULT_PRESETS], // 프리셋 목록(초 단위)
             editingPresets: false,         // 프리셋 편집 중인지
+            presetTab: 'mine',             // 보고 있는 프리셋 탭: 'mine'(자주 쓰는 시간) / 'exam'(모의고사)
+            // 마지막으로 고른 "기준 시간". OMR 5분 제외를 켜고 끌 때 이 시간을 기준으로 계산함
+            //  { sec: 기준 시간(초), name: 모의고사 과목 이름 또는 null }
+            //  직접 시간을 고치면 null이 됨
+            base: null,
+            omr: false,                    // OMR 작성 5분 제외가 켜져 있는지
         };
         // 진행·일시정지 중인지 (시간 설정을 막아야 하는 상태)
         const isBusy = () => S.state === 'running' || S.state === 'paused';
@@ -707,7 +875,7 @@
         // 타이머와 스톱워치는 각자 따로 돌아감.
         // 지금 화면에 보이는 모드의 값은 S에, 화면에 안 보이는(뒤에서 도는) 모드의 값은
         // 여기에 보관해 두었다가 모드를 바꿀 때 서로 맞바꿈
-        const MODE_FIELDS = ['state', 'totalMs', 'endTime', 'startTime', 'savedMs'];
+        const MODE_FIELDS = ['state', 'totalMs', 'endTime', 'startTime', 'savedMs', 'laps'];
         const stored = { timer: null, stopwatch: null };
         const otherMode = () => (S.mode === 'timer' ? 'stopwatch' : 'timer');
 
@@ -731,10 +899,11 @@
             el.seconds.value = sec % 60;
         }
 
-        // 밀리초 → "분:초.0" 또는 "시:분:초.0" 글자
+        // 밀리초 → "15분 00.0초" 또는 "1시간 15분 00.0초" 글자
         //  roundUp  : 올림 사용(타이머용 - 시작 순간 설정 시간이 그대로 보이게)
-        //  showHours: 1시간 미만이어도 "시" 자리를 표시할지
+        //  showHours: 1시간 미만이어도 "시간" 자리를 표시할지
         //  showTenths: 0.1초 자리를 표시할지
+        // 분·초는 항상 두 자리(05분)로 써서 글자 폭이 일정함 → 숫자 크기가 흔들리지 않음
         function formatTime(ms, { roundUp = false, showHours = false, showTenths = true } = {}) {
             const safe   = Math.max(ms, 0);
             const tenths = roundUp ? Math.ceil(safe / 100) : Math.floor(safe / 100);
@@ -743,9 +912,18 @@
             const s = Math.floor((tenths % 600) / 10);
             const t = tenths % 10;
             const pad = n => String(n).padStart(2, '0');
-            // 1시간 미만이면 "시" 자리를 생략 → 숫자가 더 크게 보임
-            const text = (showHours || h > 0) ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-            return showTenths ? `${text}.${t}` : text;
+            const secPart = showTenths ? `${pad(s)}.${t}초` : `${pad(s)}초`;
+            // 1시간 미만이면 "시간" 자리를 생략 → 숫자가 더 크게 보임
+            return (showHours || h > 0)
+                ? `${h}시간 ${pad(m)}분 ${secPart}`
+                : `${pad(m)}분 ${secPart}`;
+        }
+
+        // 큰 숫자 화면용: 단위 글자(시간·분·초)만 작은 글씨로 감쌈
+        // 예: "15분 00.0초" → 15<작은>분</작은> 00.0<작은>초</작은>
+        function toDisplayHTML(text) {
+            // 빈칸은 큰 글씨 크기만큼 넓게 벌어지므로 지우고, 간격은 CSS 여백으로 조절
+            return text.replace(/ /g, '').replace(/(시간|분|초)/g, '<span class="u">$1</span>');
         }
 
         // 초 → 프리셋 버튼에 쓸 이름. 예: 90 → "1분 30초", 3600 → "1시간"
@@ -781,10 +959,11 @@
         // =================================================================
         let lastFitKey = '';
         function fitTimer(force = false) {
-            // 숫자는 모두 폭이 같으므로(tabular-nums) 모양만 비교: "12:34.5" → "00:00.0"
+            // 숫자는 모두 폭이 같으므로(tabular-nums) 모양만 비교: "12분 34.5초" → "00분 00.0초"
             const shape = el.timer.textContent.replace(/\d/g, '0');
             const key = [shape, window.innerWidth, window.innerHeight, S.state, S.mode,
-                         S.presets.length, S.editingPresets].join('|');
+                         S.presets.length, S.editingPresets, S.presetTab, el.caption.textContent,
+                         S.laps.length].join('|');
             if (!force && key === lastFitKey) return;
             lastFitKey = key;
 
@@ -816,11 +995,20 @@
             const isTimer = S.mode === 'timer';
             const total   = S.state === 'idle' ? getInputMs() : S.totalMs;
 
+            // (0) 큰 숫자 위의 설명 글자 (예: "국어 80분 · OMR 작성 5분 제외")
+            //     글자가 바뀔 때만 고쳐 씀 (0.05초마다 다시 쓰면 불필요하게 느려짐)
+            const caption = makeCaption();
+            if (el.caption.textContent !== caption) el.caption.textContent = caption;
+
             // (1) 큰 숫자
             const text = isTimer
                 ? formatTime(ms, { roundUp: true, showHours: total >= 3600 * 1000 })
                 : formatTime(ms);
-            el.timer.textContent = text;
+            // 글자가 바뀌었을 때만 화면을 고쳐 씀
+            if (el.timer.dataset.text !== text) {
+                el.timer.dataset.text = text;
+                el.timer.innerHTML = toDisplayHTML(text);
+            }
             fitTimer();   // 글자 모양이 바뀌었을 때만 실제로 다시 계산됨
 
             // (2) 진행 막대: 남은 비율(0~1)만큼 채움
@@ -841,8 +1029,9 @@
             el.display.classList.toggle('danger', level === 'danger');
 
             // (4) 종료 후 얼마나 지났는지 표시
+            //     예: "시간 초과 +5초", "시간 초과 +1분 5초"
             el.overtime.textContent = S.state === 'finished'
-                ? `시간 초과 +${formatTime(Date.now() - S.endTime, { showTenths: false })}`
+                ? `시간 초과 +${presetLabel(Math.floor((Date.now() - S.endTime) / 1000))}`
                 : '';
 
             // (5) 브라우저 탭 제목 (다른 탭을 보고 있어도 확인 가능)
@@ -867,6 +1056,7 @@
             // 타이머인데 설정 시간이 0이면 시작 버튼을 끔
             el.mainBtn.disabled = isTimer && st === 'idle' && getInputMs() === 0;
 
+            el.lapBtn.hidden   = !(!isTimer && st === 'running');   // 스톱워치 진행 중에만
             el.minusBtn.hidden = !(isTimer && busy);
             el.plusBtn.hidden  = !(isTimer && (busy || st === 'finished'));
             el.backBtn.hidden  = !(busy || st === 'finished');
@@ -880,6 +1070,7 @@
             timeInputs.forEach(input => input.disabled = busy);
 
             renderPresets();   // 지금 시간과 같은 프리셋 강조 표시를 갱신
+            renderLaps();      // 구간 기록 목록 보이기/숨기기
         }
 
         // 상태를 바꿀 때는 항상 이 함수를 거침 → 화면·버튼·화면 꺼짐 방지가 함께 갱신됨
@@ -936,9 +1127,9 @@
                 S.totalMs = total;
                 S.endTime = Date.now() + total;
                 setInputsFromMs(total);             // 입력칸 정리(예: 90초 → 1분 30초)
-                saveSettings();                     // 다음에 열 때 같은 시간으로
             } else {
                 S.startTime = Date.now();
+                S.laps = [];                        // 새로 시작하면 구간 기록도 새로
             }
             S.editingPresets = false;               // 시작하면 프리셋 편집은 끝냄
             prepareAudio();
@@ -965,12 +1156,91 @@
         // ↺ 설정 시간으로: 타이머를 멈추고 설정해 둔 시간으로 되돌림 (설정값은 그대로)
         //   스톱워치에선 0으로 되돌림
         function reset() {
+            S.laps = [];                            // 스톱워치 구간 기록도 지움
             setState('idle');
+        }
+
+        // =================================================================
+        // 스톱워치 구간 기록
+        // =================================================================
+
+        // ⚑ 구간 기록: 누른 순간의 전체 시간을 목록에 추가
+        function recordLap() {
+            if (S.mode !== 'stopwatch' || S.state !== 'running') return;
+            S.laps.push(currentMs());
+            renderLaps(true);
+        }
+
+        // 각 구간에 걸린 시간 = 이번 기록 − 바로 앞 기록
+        // 예: 기록 [10초, 25초, 33초] → 구간 시간 [10초, 15초, 8초]
+        function lapSplits() {
+            return S.laps.map((t, i) => t - (i > 0 ? S.laps[i - 1] : 0));
+        }
+
+        // 구간 기록 목록 다시 그리기 (최근 기록이 맨 위)
+        //  isNew: 방금 기록했으면 true → 맨 위 줄을 잠깐 반짝임
+        function renderLaps(isNew = false) {
+            const show = S.mode === 'stopwatch' && S.laps.length > 0;
+            el.laps.hidden = !show;
+            document.body.classList.toggle('has-laps', show);
+            el.lapList.innerHTML = '';
+            if (!show) return;
+
+            const splits = lapSplits();
+            // 구간이 2개 이상이면 가장 빠른·느린 구간 표시 (모두 같으면 표시 안 함)
+            let best = -1, worst = -1;
+            if (splits.length >= 2) {
+                best  = splits.indexOf(Math.min(...splits));
+                worst = splits.indexOf(Math.max(...splits));
+                if (splits[best] === splits[worst]) best = worst = -1;
+            }
+
+            el.lapCount.textContent = `구간 기록 ${S.laps.length}개`;
+            for (let i = S.laps.length - 1; i >= 0; i--) {
+                const li = document.createElement('li');
+                li.className = 'lap-row';
+                if (i === best)  li.classList.add('best');
+                if (i === worst) li.classList.add('worst');
+                if (isNew && i === S.laps.length - 1) li.classList.add('new');
+                const tag = i === best ? '<span class="tag">빠름</span>'
+                          : i === worst ? '<span class="tag">느림</span>' : '';
+                // formatTime 결과는 숫자와 "분·초"뿐이라 HTML로 넣어도 안전함
+                li.innerHTML =
+                    `<span class="num">${i + 1}</span>` +
+                    `<span class="split">${formatTime(splits[i])}${tag}</span>` +
+                    `<span class="total">${formatTime(S.laps[i])}</span>`;
+                el.lapList.appendChild(li);
+            }
+            el.lapList.scrollTop = 0;               // 새 기록(맨 위)이 보이게
+        }
+
+        // 기록 복사: 엑셀·한글·메모장에 붙여넣을 수 있게 탭으로 구분한 글자로 복사
+        async function copyLaps() {
+            const splits = lapSplits();
+            const lines = ['구간\t구간 시간\t전체 시간'];
+            S.laps.forEach((t, i) => lines.push(`${i + 1}\t${formatTime(splits[i])}\t${formatTime(t)}`));
+            const text = lines.join('\n');
+            try {
+                await navigator.clipboard.writeText(text);
+            } catch (e) {
+                // 파일로 직접 연 경우 등 위 방법이 막히면 예전 방식으로 복사
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                ta.remove();
+                if (!ok) return showToast('복사하지 못했어요');
+            }
+            showToast(`구간 기록 ${S.laps.length}개를 복사했어요`);
         }
 
         // ✕ 시간 지우기: 설정한 시간 자체를 0으로
         function clearInputs() {
             if (isBusy()) return;
+            clearBase();
             setInputsFromMs(0);
             saveSettings();
             reset();
@@ -1016,7 +1286,7 @@
             MODE_FIELDS.forEach(k => current[k] = S[k]);
             stored[S.mode] = current;
             // (2) 바꿀 모드의 값을 꺼내기 (처음이면 대기 상태로 시작)
-            const next = stored[mode] || { state: 'idle', totalMs: 0, endTime: 0, startTime: 0, savedMs: 0 };
+            const next = stored[mode] || { state: 'idle', totalMs: 0, endTime: 0, startTime: 0, savedMs: 0, laps: [] };
             stored[mode] = null;
             Object.assign(S, next);
             S.mode = mode;
@@ -1033,6 +1303,7 @@
         // 예: 1분 0초에서 초 ▼ → 0분 59초 (자동으로 분에서 빌려 옴)
         function adjustInput(delta) {
             if (isBusy()) return;
+            clearBase();                            // 직접 고친 시간이므로 과목·OMR 표시 해제
             const ms = Math.min(Math.max(getInputMs() + delta, 0), MAX_MS);
             setInputsFromMs(ms);
             saveSettings();
@@ -1117,22 +1388,110 @@
                 } else {
                     // 평소: 누르면 그 시간으로 설정
                     btn.textContent = presetLabel(sec);
-                    btn.classList.toggle('active', sec === current);
-                    btn.addEventListener('click', () => applyPreset(sec));
+                    // 강조 표시: 기준 시간이 있으면 그것과 비교, 없으면 지금 입력된 시간과 비교
+                    const isActive = S.base
+                        ? (S.base.name === null && S.base.sec === sec)
+                        : sec === current;
+                    btn.classList.toggle('active', isActive);
+                    btn.addEventListener('click', () => applyPreset(sec, null));
                 }
                 el.presets.appendChild(btn);
             });
             el.editPresetBtn.textContent = S.editingPresets ? '✓ 편집 끝' : '✎ 편집';
             el.savePresetBtn.hidden    = S.editingPresets;
             el.restorePresetBtn.hidden = !S.editingPresets;
+
+            // 모의고사 탭: 고른 과목 강조
+            el.examPresets.querySelectorAll('.chip').forEach(btn => {
+                btn.classList.toggle('active', S.base !== null && S.base.name === btn.dataset.name);
+            });
+            // OMR 버튼: 켜짐/꺼짐 표시
+            el.omrBtn.setAttribute('aria-pressed', String(S.omr));
+            el.omrBtn.textContent = S.omr ? '✓ OMR 작성 5분 제외 중' : 'OMR 작성 5분 제외';
         }
 
-        // 프리셋 누르기 → 그 시간으로 설정
-        function applyPreset(sec) {
+        // 모의고사 과목 버튼 만들기 (처음 한 번만)
+        // 예: "국어 80분" 버튼 → 누르면 80분으로 설정
+        function buildExamPresets() {
+            EXAM_PRESETS.forEach(exam => {
+                const btn = document.createElement('button');
+                btn.className = 'chip';
+                btn.dataset.name = exam.name;
+                btn.textContent = `${exam.name} ${exam.min}분`;
+                btn.addEventListener('click', () => applyPreset(exam.min * 60, exam.name));
+                el.examPresets.appendChild(btn);
+            });
+        }
+
+        // 프리셋 누르기 → 그 시간을 "기준 시간"으로 정하고 입력칸에 반영
+        //  sec : 프리셋 시간(초)
+        //  name: 모의고사 과목 이름 (일반 프리셋이면 null)
+        // OMR 5분 제외가 켜져 있으면 5분을 뺀 시간으로 설정됨
+        function applyPreset(sec, name) {
             if (isBusy()) return;
+            S.base = { sec, name };
+            // 5분 이하 프리셋에서는 5분을 뺄 수 없으므로 OMR 제외를 끔
+            if (S.omr && sec <= OMR_SEC) {
+                S.omr = false;
+                showToast('5분 이하 시간이라 OMR 5분 제외를 껐어요');
+            }
+            applyBase();
+        }
+
+        // 기준 시간 − (OMR 켜짐이면 5분) → 입력칸에 넣고 대기 화면으로
+        function applyBase() {
+            const sec = S.base.sec - (S.omr ? OMR_SEC : 0);
             setInputsFromMs(sec * 1000);
             saveSettings();
             reset();
+        }
+
+        // OMR 작성 5분 제외 켜기/끄기
+        // 켜면 기준 시간에서 5분을 빼고, 끄면 기준 시간으로 되돌림
+        // (여러 번 눌러도 5분씩 계속 빠지지 않음)
+        function toggleOmr() {
+            if (isBusy()) return;
+            if (!S.omr) {
+                // 프리셋을 안 골랐으면 지금 입력된 시간을 기준으로 삼음
+                const base = S.base || { sec: Math.round(getInputMs() / 1000), name: null };
+                if (base.sec <= OMR_SEC) return showToast('5분보다 긴 시간에서만 뺄 수 있어요');
+                S.base = base;
+                S.omr = true;
+                applyBase();
+                showToast(`5분을 뺐어요 → ${presetLabel(base.sec - OMR_SEC)}`);
+            } else {
+                S.omr = false;
+                applyBase();
+                showToast(`원래 시간으로 → ${presetLabel(S.base.sec)}`);
+            }
+        }
+
+        // 시간을 직접 고치면 기준 시간·OMR 표시를 없앰
+        // (직접 맞춘 시간은 더 이상 "국어 80분 − 5분"이 아니므로)
+        function clearBase() {
+            S.base = null;
+            S.omr = false;
+        }
+
+        // 큰 숫자 위에 보일 설명 글자 만들기
+        //  예: "국어 80분 · OMR 작성 5분 제외" / "국어 80분" / "OMR 작성 5분 제외"
+        function makeCaption() {
+            if (S.mode !== 'timer' || !S.base) return '';
+            const parts = [];
+            if (S.base.name) parts.push(`${S.base.name} ${Math.round(S.base.sec / 60)}분`);
+            if (S.omr)       parts.push('OMR 작성 5분 제외');
+            return parts.join(' · ');
+        }
+
+        // 프리셋 탭 바꾸기: 'mine'(자주 쓰는 시간) / 'exam'(모의고사)
+        function setPresetTab(tab) {
+            S.presetTab = tab === 'exam' ? 'exam' : 'mine';
+            presetTabs.forEach(t => t.classList.toggle('active', t.dataset.tab === S.presetTab));
+            el.minePanel.hidden = S.presetTab !== 'mine';
+            el.examPanel.hidden = S.presetTab !== 'exam';
+            if (S.presetTab !== 'mine') S.editingPresets = false;   // 다른 탭으로 가면 편집 끝냄
+            renderPresets();
+            fitTimer(true);                        // 높이가 바뀌므로 숫자 크기 다시 맞춤
         }
 
         // ＋ 지금 입력된 시간을 새 프리셋으로 저장
@@ -1329,9 +1688,11 @@
         function saveSettings() {
             try {
                 localStorage.setItem(SETTINGS_KEY, JSON.stringify({
-                    ms: getInputMs(),            // 마지막 설정 시간
+                    // 설정 시간·고른 과목·OMR 상태는 저장하지 않음
+                    // → 페이지를 열 때마다 항상 0시 0분 0초에서 시작
                     sound: el.soundOn.checked,   // 알림음 켜짐 여부
                     theme: S.theme,              // 색상 테마
+                    tab: S.presetTab,            // 보고 있던 프리셋 탭
                 }));
             } catch (e) {}
         }
@@ -1339,9 +1700,10 @@
             try {
                 const data = JSON.parse(localStorage.getItem(SETTINGS_KEY));
                 if (data) {
-                    setInputsFromMs(data.ms || 0);
+                    // 시간은 불러오지 않음 (입력칸은 HTML에 적힌 0 그대로)
                     el.soundOn.checked = data.sound !== false;
                     if (data.theme) S.theme = data.theme;
+                    if (data.tab)   S.presetTab = data.tab;
                 }
             } catch (e) {}
         }
@@ -1388,6 +1750,13 @@
         el.savePresetBtn.addEventListener('click', addPreset);
         el.editPresetBtn.addEventListener('click', toggleEditPresets);
         el.restorePresetBtn.addEventListener('click', restorePresets);
+        el.omrBtn.addEventListener('click', toggleOmr);
+        el.lapBtn.addEventListener('click', recordLap);
+        el.copyLapsBtn.addEventListener('click', copyLaps);
+        presetTabs.forEach(t => t.addEventListener('click', () => {
+            setPresetTab(t.dataset.tab);
+            saveSettings();
+        }));
         modeButtons.forEach(btn => btn.addEventListener('click', () => setMode(btn.dataset.mode)));
 
         timeInputs.forEach(input => {
@@ -1395,6 +1764,7 @@
             input.addEventListener('focus', () => input.select());
             // 숫자를 바꾸면 큰 화면에 바로 미리보기
             input.addEventListener('input', () => {
+                clearBase();                        // 직접 입력한 시간이므로 과목·OMR 표시 해제
                 if (S.state === 'finished') reset();
                 else { updateControls(); render(); }
             });
@@ -1434,6 +1804,8 @@
             if (e.code === 'Space') {
                 e.preventDefault();                     // 화면 스크롤 방지
                 toggleMain();
+            } else if (key === 'l' || key === 'ㅣ') {
+                recordLap();                            // 스톱워치 구간 기록
             } else if (key === 'r' || key === 'ㄱ') {
                 reset();                                // 설정 시간으로
             } else if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -1455,6 +1827,8 @@
         // =================================================================
         loadSettings();                     // 지난번 설정 불러오기
         loadPresets();                      // 저장된 프리셋 불러오기
+        buildExamPresets();                 // 모의고사 과목 버튼 만들기
+        setPresetTab(S.presetTab);          // 지난번 보던 프리셋 탭 열기
         applyTheme(S.theme);                // 색상 테마 적용
         updateClock();
         setInterval(updateClock, 100);
