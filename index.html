@@ -9,59 +9,192 @@
     <!-- 휴대폰 브라우저 위쪽 주소창 색 (테마에 따라 자바스크립트가 바꿈) -->
     <meta name="theme-color" content="#0b1020" id="themeColorMeta">
     <title>타이머</title>
+    <!-- 프리텐다드 글꼴 (인터넷이 될 때만 불러옴).
+         media="print" → 불러오는 동안 화면 표시를 막지 않고, 다 불러오면 화면에 적용 -->
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
     <style>
         /* =================================================================
-           1. 색상 테마
+           1. 색상 테마 (12가지)
               html 태그의 data-theme 값에 따라 아래 색 묶음 중 하나가 적용됨
-              --ok     : 평상시 숫자·막대 색        --on-ok   : 그 위에 올라가는 글자색
-              --warn   : 시간이 얼마 안 남았을 때    --danger  : 거의 끝났을 때
-              --end-bg : 종료 후 배경               --on-end  : 종료 후 숫자색
+              ※ 테마 선택 창의 미리보기 카드에도 data-theme를 붙여서
+                 같은 색 묶음으로 미리보기를 그림
+
+              --bg, --bg2  : 배경색 (위쪽 bg2 → 아래쪽 bg 로 은은하게 변함)
+              --glow       : 화면 위쪽에서 퍼지는 빛 번짐 색
+              --glow2      : 화면 오른쪽 아래의 두 번째 빛 번짐 색
+              --fg / --muted : 기본 글자 / 흐린 글자
+              --panel / --line : 버튼·입력칸 바탕 / 테두리 (살짝 비치는 유리 느낌)
+              --ok         : 평상시 숫자·막대 색        --on-ok   : 그 위에 올라가는 글자색
+              --warn       : 시간이 얼마 안 남았을 때    --danger  : 거의 끝났을 때
+              --end-bg     : 종료 후 배경               --on-end  : 종료 후 숫자색
+              --digit-glow : 큰 숫자 주변 빛의 세기 (0%면 빛 없음)
+              --shadow     : 버튼 그림자 색
            ================================================================= */
 
-        /* 밤하늘(기본): 짙은 남색 배경 + 하늘색 숫자. 눈이 편하고 프로젝터에서도 선명 */
+        /* ---------- 어두운 테마 ---------- */
+
+        /* 밤하늘(기본): 깊은 남색 + 하늘색 숫자. 눈이 편하고 프로젝터에서도 선명 */
         :root, [data-theme="night"] {
-            --bg: #0b1020;  --fg: #e8ecf6;  --muted: #8b93ab;
-            --panel: #151b2e;  --line: #283152;
+            color-scheme: dark;
+            --bg: #070b18;  --bg2: #101a36;
+            --glow: rgba(90, 150, 255, 0.24);  --glow2: rgba(120, 90, 255, 0.10);
+            --fg: #e9edf7;  --muted: #8b94ad;
+            --panel: rgba(24, 33, 60, 0.62);  --line: rgba(255, 255, 255, 0.09);
             --ok: #8ec5ff;  --on-ok: #06203d;
             --warn: #ffd479;  --on-warn: #3a2a00;
             --danger: #ff7a85;
-            --end-bg: #b3123b;  --on-end: #ffffff;
+            --end-bg: #a8123a;  --on-end: #ffffff;
+            --digit-glow: 35%;  --shadow: rgba(0, 0, 0, 0.5);
         }
-        /* 민트: 처음 쓰시던 검정 배경 + 연두색 숫자 */
+        /* 오로라: 북극 하늘처럼 청록 + 보라 빛 */
+        [data-theme="aurora"] {
+            color-scheme: dark;
+            --bg: #04111a;  --bg2: #0a2230;
+            --glow: rgba(60, 230, 180, 0.22);  --glow2: rgba(160, 90, 255, 0.20);
+            --fg: #e6f5f1;  --muted: #82a39c;
+            --panel: rgba(14, 40, 50, 0.6);  --line: rgba(255, 255, 255, 0.09);
+            --ok: #6ff0c8;  --on-ok: #03261c;
+            --warn: #ffe08a;  --on-warn: #3a2a00;
+            --danger: #ff7a9a;
+            --end-bg: #9b1248;  --on-end: #ffffff;
+            --digit-glow: 40%;  --shadow: rgba(0, 0, 0, 0.5);
+        }
+        /* 샴페인 골드: 검정 + 은은한 금색. 가장 고급스러운 느낌 */
+        [data-theme="gold"] {
+            color-scheme: dark;
+            --bg: #0a0907;  --bg2: #19150e;
+            --glow: rgba(214, 178, 110, 0.18);  --glow2: rgba(214, 178, 110, 0.06);
+            --fg: #f4eee2;  --muted: #a09581;
+            --panel: rgba(36, 30, 20, 0.62);  --line: rgba(230, 200, 140, 0.15);
+            --ok: #e8cb8c;  --on-ok: #2a1f08;
+            --warn: #ffb86b;  --on-warn: #2e1600;
+            --danger: #ff6b6b;
+            --end-bg: #8a1c1c;  --on-end: #ffffff;
+            --digit-glow: 28%;  --shadow: rgba(0, 0, 0, 0.6);
+        }
+        /* 숲: 짙은 초록 + 연두색 */
+        [data-theme="forest"] {
+            color-scheme: dark;
+            --bg: #06110b;  --bg2: #0f2418;
+            --glow: rgba(120, 210, 130, 0.18);  --glow2: rgba(200, 220, 120, 0.06);
+            --fg: #e8f2e7;  --muted: #86a28b;
+            --panel: rgba(18, 40, 27, 0.62);  --line: rgba(255, 255, 255, 0.08);
+            --ok: #a8e6a1;  --on-ok: #0b2410;
+            --warn: #ffd36e;  --on-warn: #3a2a00;
+            --danger: #ff7f7f;
+            --end-bg: #9c1a2b;  --on-end: #ffffff;
+            --digit-glow: 32%;  --shadow: rgba(0, 0, 0, 0.5);
+        }
+        /* 라벤더: 깊은 보라 + 연보라 */
+        [data-theme="lavender"] {
+            color-scheme: dark;
+            --bg: #0d0919;  --bg2: #1c1434;
+            --glow: rgba(170, 130, 255, 0.24);  --glow2: rgba(255, 120, 200, 0.10);
+            --fg: #efeafa;  --muted: #9c94b3;
+            --panel: rgba(36, 27, 62, 0.6);  --line: rgba(255, 255, 255, 0.09);
+            --ok: #cbb6ff;  --on-ok: #22104a;
+            --warn: #ffd98a;  --on-warn: #3a2a00;
+            --danger: #ff7aa2;
+            --end-bg: #9b1248;  --on-end: #ffffff;
+            --digit-glow: 38%;  --shadow: rgba(0, 0, 0, 0.5);
+        }
+        /* 노을: 따뜻한 밤 + 살구색 */
+        [data-theme="sunset"] {
+            color-scheme: dark;
+            --bg: #130b0d;  --bg2: #27151b;
+            --glow: rgba(255, 140, 90, 0.22);  --glow2: rgba(255, 80, 130, 0.12);
+            --fg: #f7ede7;  --muted: #a5918b;
+            --panel: rgba(44, 26, 30, 0.6);  --line: rgba(255, 255, 255, 0.08);
+            --ok: #ffb38a;  --on-ok: #3a1606;
+            --warn: #ffe08a;  --on-warn: #3a2a00;
+            --danger: #ff5d73;
+            --end-bg: #941032;  --on-end: #ffffff;
+            --digit-glow: 34%;  --shadow: rgba(0, 0, 0, 0.5);
+        }
+        /* 칠판: 교실 칠판 초록 + 분필 흰색 */
+        [data-theme="chalk"] {
+            color-scheme: dark;
+            --bg: #13281e;  --bg2: #1d3b2d;
+            --glow: rgba(255, 255, 255, 0.06);  --glow2: rgba(255, 255, 255, 0.03);
+            --fg: #f0f1ea;  --muted: #a2b8ab;
+            --panel: rgba(255, 255, 255, 0.06);  --line: rgba(255, 255, 255, 0.15);
+            --ok: #f6f3e9;  --on-ok: #13281e;
+            --warn: #ffe38a;  --on-warn: #3a2a00;
+            --danger: #ff9e9e;
+            --end-bg: #7a1f1f;  --on-end: #ffffff;
+            --digit-glow: 12%;  --shadow: rgba(0, 0, 0, 0.35);
+        }
+        /* 클래식 민트: 처음 쓰시던 검정 배경 + 연두색 숫자 */
         [data-theme="mint"] {
-            --bg: #000000;  --fg: #f2f2f2;  --muted: #8a8f98;
-            --panel: #15181d;  --line: #2a2f37;
+            color-scheme: dark;
+            --bg: #000000;  --bg2: #080b09;
+            --glow: rgba(174, 242, 166, 0.08);  --glow2: transparent;
+            --fg: #f2f2f2;  --muted: #8a8f98;
+            --panel: rgba(24, 28, 33, 0.8);  --line: rgba(255, 255, 255, 0.1);
             --ok: rgb(174, 242, 166);  --on-ok: #06240a;
             --warn: #ffd166;  --on-warn: #3a2a00;
             --danger: #ff6b6b;
             --end-bg: #c1121f;  --on-end: #ffffff;
+            --digit-glow: 25%;  --shadow: rgba(0, 0, 0, 0.5);
         }
-        /* 노을: 따뜻한 갈색 배경 + 살구색 숫자 */
-        [data-theme="sunset"] {
-            --bg: #1b1214;  --fg: #f6ece6;  --muted: #a08f8a;
-            --panel: #261a1c;  --line: #3d2c2e;
-            --ok: #ffb38a;  --on-ok: #3a1606;
-            --warn: #ffe08a;  --on-warn: #3a2a00;
-            --danger: #ff5d73;
-            --end-bg: #9e1030;  --on-end: #ffffff;
-        }
-        /* 밝게: 밝은 교실·낮 시간용. 미색 배경 + 짙은 초록 숫자 */
+
+        /* ---------- 밝은 테마 (밝은 교실·낮 시간용) ---------- */
+
+        /* 종이: 미색 종이 + 짙은 초록 */
         [data-theme="light"] {
-            --bg: #f5f3ee;  --fg: #1d2330;  --muted: #6b7280;
-            --panel: #ffffff;  --line: #d9d4c7;
+            color-scheme: light;
+            --bg: #f2eee5;  --bg2: #fbf9f4;
+            --glow: rgba(23, 121, 90, 0.08);  --glow2: rgba(200, 160, 90, 0.08);
+            --fg: #1d2330;  --muted: #6b7280;
+            --panel: rgba(255, 255, 255, 0.72);  --line: rgba(29, 35, 48, 0.12);
             --ok: #17795a;  --on-ok: #ffffff;
             --warn: #b86e00;  --on-warn: #ffffff;
             --danger: #c8102e;
             --end-bg: #c8102e;  --on-end: #ffffff;
+            --digit-glow: 0%;  --shadow: rgba(60, 50, 30, 0.16);
         }
-        /* 고대비: 멀리서도 가장 잘 보이는 검정 + 흰색 */
+        /* 벚꽃: 연분홍 + 장미색 */
+        [data-theme="sakura"] {
+            color-scheme: light;
+            --bg: #f9edf0;  --bg2: #fff8fa;
+            --glow: rgba(232, 106, 140, 0.16);  --glow2: rgba(255, 190, 120, 0.10);
+            --fg: #3a2230;  --muted: #8f7480;
+            --panel: rgba(255, 255, 255, 0.72);  --line: rgba(58, 34, 48, 0.12);
+            --ok: #c2416b;  --on-ok: #ffffff;
+            --warn: #b45f06;  --on-warn: #ffffff;
+            --danger: #d0021b;
+            --end-bg: #b0124a;  --on-end: #ffffff;
+            --digit-glow: 0%;  --shadow: rgba(120, 40, 70, 0.14);
+        }
+        /* 하늘: 맑은 하늘색 + 짙은 파랑 */
+        [data-theme="sky"] {
+            color-scheme: light;
+            --bg: #e9f1fb;  --bg2: #f8fbff;
+            --glow: rgba(60, 130, 230, 0.16);  --glow2: rgba(120, 200, 255, 0.12);
+            --fg: #14223a;  --muted: #66768f;
+            --panel: rgba(255, 255, 255, 0.75);  --line: rgba(20, 34, 58, 0.12);
+            --ok: #1f5fbf;  --on-ok: #ffffff;
+            --warn: #b06a00;  --on-warn: #ffffff;
+            --danger: #cc1f3a;
+            --end-bg: #c21d3c;  --on-end: #ffffff;
+            --digit-glow: 0%;  --shadow: rgba(20, 50, 100, 0.14);
+        }
+
+        /* ---------- 잘 보이게 ---------- */
+
+        /* 고대비: 멀리서도 가장 잘 보이는 검정 + 흰색 (빛 효과 없음) */
         [data-theme="contrast"] {
-            --bg: #000000;  --fg: #ffffff;  --muted: #bbbbbb;
+            color-scheme: dark;
+            --bg: #000000;  --bg2: #000000;
+            --glow: transparent;  --glow2: transparent;
+            --fg: #ffffff;  --muted: #bbbbbb;
             --panel: #111111;  --line: #555555;
             --ok: #ffffff;  --on-ok: #000000;
             --warn: #ffe600;  --on-warn: #000000;
             --danger: #ff3b30;
             --end-bg: #d70015;  --on-end: #ffffff;
+            --digit-glow: 0%;  --shadow: transparent;
         }
 
         /* =================================================================
@@ -69,7 +202,10 @@
               아래의 크기는 대부분 rem(= 이 기준 크기의 배수)으로 적었기 때문에
               휴대폰에선 작게, 4K TV에선 크게 전체가 함께 커지고 작아짐 (16~44px)
            ================================================================= */
-        html { font-size: clamp(16px, min(1.05vw, 1.9vh), 44px); }
+        html {
+            font-size: clamp(16px, min(1.05vw, 1.9vh), 44px);
+            background: var(--bg);   /* 화면을 끝까지 당겼을 때 보이는 바깥 부분도 테마색으로 */
+        }
 
         /* 모든 요소의 크기 계산에 테두리·여백을 포함 */
         * { box-sizing: border-box; }
@@ -85,9 +221,16 @@
             min-height: 100dvh;                    /* 휴대폰 주소창 높이를 뺀 실제 화면 높이 */
             display: flex;
             flex-direction: column;
-            background: var(--bg);
+            /* 배경: 위쪽에서 퍼지는 빛 + 오른쪽 아래 두 번째 빛 + 위→아래 은은한 색 변화 */
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(70rem 32rem at 50% -8%, var(--glow), transparent 65%),
+                radial-gradient(55rem 38rem at 100% 110%, var(--glow2), transparent 60%),
+                linear-gradient(180deg, var(--bg2), var(--bg) 75%);
+            background-attachment: fixed;
             color: var(--fg);
-            font-family: 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
+            /* 프리텐다드 글꼴(인터넷 연결 시). 없으면 맑은 고딕 등으로 표시 */
+            font-family: 'Pretendard Variable', 'Pretendard', 'Malgun Gothic', 'Apple SD Gothic Neo', Arial, sans-serif;
             user-select: none;                     /* 연타 시 글자 선택 방지 */
             -webkit-tap-highlight-color: transparent; /* 휴대폰에서 누를 때 생기는 파란 상자 제거 */
             transition: background-color 0.4s, color 0.4s;
@@ -142,47 +285,192 @@
             transform: translateY(-0.06em) rotate(45deg);
         }
 
-        /* ----- 색상 테마 선택 메뉴 ----- */
-        .menu-wrap { position: relative; }
-        #themeMenu {
-            position: absolute;
-            right: 0;
-            top: calc(100% + 0.4rem);
-            display: grid;
-            grid-template-columns: repeat(5, auto);
-            gap: 0.5rem;
-            padding: 0.7rem;
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 0.8rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-        }
-        .swatch {
-            display: flex;
-            flex-direction: column;
+        /* =================================================================
+           테마 버튼 (상단 바) - 눈에 잘 띄도록 색 동그라미 + 현재 테마 이름
+           ================================================================= */
+        .theme-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
-            padding: 0;
-            background: none;
-            border: 0;
+            gap: 0.45em;
+            padding: 0.3em 0.85em 0.3em 0.4em;
+            font-size: inherit;
             color: var(--fg);
-            font-size: 0.8rem;
+            background: var(--panel);
+            border: 1px solid color-mix(in srgb, var(--ok) 45%, var(--line));
+            border-radius: 999px;
             cursor: pointer;
+            box-shadow: 0 0 0 0 transparent, 0 4px 14px -6px var(--shadow);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
-        /* 각 테마의 배경색·숫자색을 미리 보여 주는 작은 상자 */
-        .swatch .sample {
-            width: 3rem;
+        /* 색 동그라미: 지금 테마의 주요 색 3가지를 둥글게 보여 줌 */
+        .theme-dot {
+            width: 1.15em;
+            height: 1.15em;
+            border-radius: 50%;
+            flex: none;
+            background: conic-gradient(from 200deg, var(--ok) 0 55%, var(--warn) 0 78%, var(--danger) 0);
+            box-shadow: 0 0 0 2px var(--bg), 0 0 10px color-mix(in srgb, var(--ok) 60%, transparent);
+        }
+        .theme-btn .theme-label { font-weight: 700; }
+        .theme-btn .theme-name  { color: var(--muted); }
+        /* 처음 방문 때: 테마 버튼 둘레에 빛이 퍼지며 "여기서 바꿀 수 있어요" 알림 */
+        .theme-btn.hint { animation: hintPulse 1.4s ease-out 4; }
+        @keyframes hintPulse {
+            0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok) 70%, transparent), 0 4px 14px -6px var(--shadow); }
+            100% { box-shadow: 0 0 0 0.9em transparent, 0 4px 14px -6px var(--shadow); }
+        }
+
+        /* =================================================================
+           테마 선택 창
+           넓은 화면: 오른쪽 위에 뜨는 창 / 휴대폰: 아래에서 올라오는 창
+           ================================================================= */
+        /* 창 바깥을 누르면 닫히도록 화면 전체를 덮는 투명한 층 */
+        #themeBackdrop { position: fixed; inset: 0; z-index: 29; }
+        #themePanel {
+            position: fixed;
+            z-index: 30;
+            top: calc(3.4rem + env(safe-area-inset-top));
+            right: calc(1rem + env(safe-area-inset-right));
+            width: min(36rem, calc(100vw - 2rem));
+            max-height: calc(100vh - 5rem);
+            max-height: calc(100dvh - 5rem);
+            overflow-y: auto;
+            overscroll-behavior: contain;          /* 창 안을 스크롤해도 뒤 화면은 안 움직임 */
+            padding: 1rem 1.1rem 1.2rem;
+            color: var(--fg);
+            /* 뒤가 살짝 비치는 유리 느낌 (지원 안 되는 브라우저는 불투명 배경) */
+            background: var(--bg2);
+            background: color-mix(in srgb, var(--bg2) 84%, transparent);
+            -webkit-backdrop-filter: blur(22px) saturate(1.3);
+            backdrop-filter: blur(22px) saturate(1.3);
+            border: 1px solid var(--line);
+            border-radius: 1.2rem;
+            box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.55);
+            animation: panelIn 0.2s ease-out;
+        }
+        @keyframes panelIn { from { opacity: 0; transform: translateY(-0.5rem) scale(0.98); } }
+        .panel-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.9rem;
+        }
+        .panel-head h2 { margin: 0; font-size: 1.15rem; letter-spacing: -0.01em; }
+        .panel-head p  { margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--muted); }
+        .icon-btn {
+            flex: none;
+            width: 2.2rem;
             height: 2.2rem;
             display: grid;
             place-content: center;
-            border-radius: 0.5rem;
-            font-weight: 700;
             font-size: 1rem;
-            background: var(--s-bg);
-            color: var(--s-fg);
-            border: 2px solid var(--line);
+            color: var(--muted);
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 50%;
+            cursor: pointer;
         }
-        .swatch.active .sample { border-color: var(--fg); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg); }
+        .theme-group-title {
+            margin: 1rem 0 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--muted);
+        }
+        .theme-group-title:first-child { margin-top: 0; }
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+            gap: 0.7rem;
+        }
+        /* 테마 카드 하나 = 미리보기 + 이름 */
+        .theme-card {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding: 0;
+            color: var(--fg);
+            text-align: left;
+            background: none;
+            border: 0;
+            cursor: pointer;
+        }
+        .theme-card .name {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0.15rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .theme-card .check { color: var(--ok); font-weight: 800; visibility: hidden; }
+        .theme-card.active .check { visibility: visible; }
+        /* 미리보기: data-theme가 붙어 있어서 그 테마의 색으로 그려짐 */
+        .preview {
+            position: relative;
+            aspect-ratio: 16 / 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.45rem;
+            overflow: hidden;
+            color: var(--fg);
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(120% 90% at 50% -15%, var(--glow), transparent 70%),
+                radial-gradient(90% 90% at 110% 120%, var(--glow2), transparent 60%),
+                linear-gradient(180deg, var(--bg2), var(--bg));
+            border: 1px solid var(--line);
+            border-radius: 0.85rem;
+            box-shadow: 0 8px 20px -10px var(--shadow);
+            transition: transform 0.15s;
+        }
+        .preview .pv-num {
+            font-size: 1.45rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--ok);
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 12px color-mix(in srgb, var(--ok) var(--digit-glow), transparent);
+        }
+        .preview .pv-num small { font-size: 0.45em; font-weight: 600; opacity: 0.8; margin: 0 0.35em 0 0.05em; }
+        .preview .pv-num small:last-child { margin-right: 0; }
+        /* 미리보기 속 작은 진행 막대 (색 + 노랑·빨강 경고색까지 보여 줌) */
+        .preview .pv-bar {
+            width: 68%;
+            height: 0.28rem;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--line) 0 30%, var(--danger) 30% 40%, var(--warn) 40% 52%, var(--ok) 52%);
+        }
+        /* 지금 쓰는 테마: 테두리 강조 */
+        .theme-card.active .preview { outline: 2px solid var(--ok); outline-offset: 2px; }
+        /* 휴대폰: 아래에서 올라오는 창 + 뒤 화면 살짝 어둡게 */
+        @media (max-width: 600px) {
+            #themeBackdrop { background: rgba(0, 0, 0, 0.35); }
+            #themePanel {
+                top: auto;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                max-height: 78vh;
+                max-height: 78dvh;
+                border-radius: 1.3rem 1.3rem 0 0;
+                border-bottom: 0;
+                padding-bottom: calc(1.2rem + env(safe-area-inset-bottom));
+                animation: sheetIn 0.25s ease-out;
+            }
+            .theme-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
+            .preview .pv-num { font-size: 1.1rem; }
+        }
+        @keyframes sheetIn { from { transform: translateY(100%); } }
+
+        /* 테마가 바뀔 때 화면 전체가 부드럽게 바뀌는 시간 */
+        ::view-transition-old(root),
+        ::view-transition-new(root) { animation-duration: 0.35s; }
 
         /* ----- 가운데 영역 ----- */
         main {
@@ -214,6 +502,9 @@
             background: var(--panel);
             border: 1px solid var(--line);
             border-radius: 999px;
+            box-shadow: 0 6px 18px -10px var(--shadow);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
         }
         .mode-switch button {
             border: 0;
@@ -224,7 +515,12 @@
             border-radius: 999px;
             cursor: pointer;
         }
-        .mode-switch button.active { background: var(--fg); color: var(--bg); font-weight: 700; }
+        .mode-switch button.active {
+            background: var(--fg);
+            color: var(--bg);
+            font-weight: 700;
+            box-shadow: 0 2px 8px -2px var(--shadow);
+        }
         /* 다른 모드가 뒤에서 돌아가는 중이면 그 버튼 오른쪽 위에 작은 점 표시
            (글자를 바꾸면 버튼 폭이 달라져 스위치가 흔들리므로 점으로만 알림) */
         .mode-switch button { position: relative; }
@@ -262,11 +558,13 @@
             font-size: min(17vw, 30vh);
             line-height: 1;
             font-weight: 700;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.03em;
             color: var(--level);
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
             transition: color 0.3s;
+            /* 숫자 주변의 은은한 빛 (세기는 테마의 --digit-glow, 밝은 테마는 0%) */
+            text-shadow: 0 0 0.08em color-mix(in srgb, var(--level) var(--digit-glow), transparent);
         }
         /* 큰 숫자 사이의 단위 글자(시간·분·초): 숫자보다 작게, 살짝 띄워서 */
         #timer .u {
@@ -287,10 +585,14 @@
             background: var(--line);
             border-radius: 999px;
             overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
         }
         #progressBar {
             height: 100%;
             background: var(--level);
+            /* 왼쪽(비워지는 쪽)은 살짝 옅게, 오른쪽은 진하게 */
+            background: linear-gradient(90deg, color-mix(in srgb, var(--level) 55%, transparent), var(--level));
+            box-shadow: 0 0 12px color-mix(in srgb, var(--level) var(--digit-glow), transparent);
             border-radius: 999px;
             transform-origin: right;               /* 오른쪽 기준 → 왼쪽에서 오른쪽으로 줄어듦 */
             transition: transform 0.1s linear, background-color 0.3s;
@@ -426,16 +728,37 @@
             font-size: 1.4rem;
             color: var(--fg);
             background: var(--panel);
+            /* 위쪽에 아주 옅은 빛을 얹어 살짝 볼록해 보이게 */
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)), var(--panel);
             border: 1px solid var(--line);
             border-radius: 0.6em;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 16px -10px var(--shadow);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
             cursor: pointer;
-            transition: filter 0.2s, background-color 0.2s;
+            transition: filter 0.2s, background-color 0.2s, transform 0.1s;
         }
+        .btn:active:not(:disabled) { transform: translateY(1px); }   /* 누를 때 살짝 들어감 */
         .btn:disabled { opacity: 0.35; cursor: not-allowed; }
         .btn.small { min-width: 0; padding: 0.3em 0.8em; font-size: inherit; }
         /* 가장 중요한 버튼(시작/일시정지)은 색을 채워 눈에 띄게 */
-        .btn.primary { background: var(--ok); color: var(--on-ok); border-color: transparent; font-weight: 700; }
-        body[data-state="running"] .btn.primary { background: var(--warn); color: var(--on-warn); }
+        /* (color-mix를 지원하지 않는 옛 브라우저는 바로 위 한 가지 색만 사용) */
+        .btn.primary {
+            color: var(--on-ok);
+            background: var(--ok);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--ok) 82%, white), var(--ok));
+            border-color: transparent;
+            font-weight: 700;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                        0 8px 22px -10px color-mix(in srgb, var(--ok) 70%, transparent);
+        }
+        body[data-state="running"] .btn.primary {
+            color: var(--on-warn);
+            background: var(--warn);
+            background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 82%, white), var(--warn));
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35),
+                        0 8px 22px -10px color-mix(in srgb, var(--warn) 70%, transparent);
+        }
 
         /* 마우스가 있는 기기에서만 올렸을 때 효과 적용
            (휴대폰에선 누른 뒤에도 효과가 남아 이상하게 보이는 문제 방지) */
@@ -539,7 +862,13 @@
         .display.danger #timer { animation: pulse 1s ease-in-out infinite; }
 
         /* 종료: 배경색 변경 + 숫자 깜빡임 */
-        body[data-state="finished"] { background: var(--end-bg); color: var(--on-end); }
+        body[data-state="finished"] {
+            background-color: var(--end-bg);
+            background-image: radial-gradient(70rem 40rem at 50% 30%, rgba(255, 255, 255, 0.14), transparent 70%);
+            color: var(--on-end);
+        }
+        body[data-state="finished"] .theme-btn { color: var(--on-end); }
+        body[data-state="finished"] .theme-btn .theme-name { color: inherit; opacity: 0.8; }
         body[data-state="finished"] .display { --level: var(--on-end); }
         body[data-state="finished"] #timer { animation: blink 1s steps(1) infinite; }
         body[data-state="finished"] .topbar,
@@ -571,7 +900,7 @@
 
         /* 키보드가 없는 터치 기기·좁은 화면에선 단축키 안내를 숨김 */
         @media (hover: none), (max-width: 600px) {
-            #help { display: none; }
+            #help, .kbd-hint { display: none; }
         }
 
         /* 폭이 좁은 휴대폰(세로) */
@@ -583,7 +912,15 @@
             /* 조작 버튼을 2칸씩 같은 폭으로 배치 */
             .controls { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
             .controls .btn { min-width: 0; padding: 0.55em 0.3em; }
-            #themeMenu { grid-template-columns: repeat(3, auto); }
+            .theme-btn .theme-name { display: none; }   /* 좁은 화면: 색 동그라미 + "테마"만 */
+        }
+
+        /* 아주 좁은 휴대폰(폭 360px 이하): 상단 바 글자·간격을 조금 줄여 한 줄에 맞춤 */
+        @media (max-width: 360px) {
+            .topbar { padding: 0.5rem 0.55rem; font-size: 0.78rem; gap: 0.4rem; }
+            .clock { gap: 0.35rem; }
+            .tools { gap: 0.35rem; }
+            .theme-btn { padding: 0.3em 0.7em 0.3em 0.35em; gap: 0.35em; }
         }
 
         /* 폭도 좁고 키도 작은 휴대폰(예: 구형 아이폰 SE)
@@ -676,16 +1013,12 @@
 
             <!-- 색상 테마 선택: 누르면 아래에 색 견본이 펼쳐짐
                  --s-bg / --s-fg = 견본에 보일 배경색 / 숫자색 -->
-            <div class="menu-wrap">
-                <button id="themeBtn" class="btn small" aria-haspopup="true">🎨<span class="label-text"> 색상</span></button>
-                <div id="themeMenu" hidden>
-                    <button class="swatch" data-theme="night"    style="--s-bg:#0b1020; --s-fg:#8ec5ff;"><span class="sample">12</span>밤하늘</button>
-                    <button class="swatch" data-theme="mint"     style="--s-bg:#000000; --s-fg:rgb(174,242,166);"><span class="sample">12</span>민트</button>
-                    <button class="swatch" data-theme="sunset"   style="--s-bg:#1b1214; --s-fg:#ffb38a;"><span class="sample">12</span>노을</button>
-                    <button class="swatch" data-theme="light"    style="--s-bg:#f5f3ee; --s-fg:#17795a;"><span class="sample">12</span>밝게</button>
-                    <button class="swatch" data-theme="contrast" style="--s-bg:#000000; --s-fg:#ffffff;"><span class="sample">12</span>고대비</button>
-                </div>
-            </div>
+            <!-- 테마 버튼: 색 동그라미 + "테마" + 지금 테마 이름 (누르면 테마 선택 창) -->
+            <button id="themeBtn" class="theme-btn" aria-haspopup="dialog" aria-controls="themePanel">
+                <span class="theme-dot"></span>
+                <span class="theme-label">테마</span>
+                <span class="theme-name" id="themeName">밤하늘</span>
+            </button>
 
             <button id="fullscreenBtn" class="btn small">⛶<span class="label-text"> 전체 화면</span></button>
         </div>
@@ -787,12 +1120,27 @@
         <p id="help">
             <kbd>Space</kbd> 시작·일시정지 &nbsp; <kbd>L</kbd> 구간 기록 &nbsp; <kbd>↑</kbd><kbd>↓</kbd>·마우스 휠 시간 조절 &nbsp;
             <kbd>+</kbd><kbd>−</kbd> 1분 &nbsp; <kbd>R</kbd> 설정 시간으로 &nbsp;
-            <kbd>Del</kbd> 시간 지우기 &nbsp; <kbd>F</kbd> 전체 화면
+            <kbd>Del</kbd> 시간 지우기 &nbsp; <kbd>T</kbd> 테마 바꾸기 &nbsp; <kbd>F</kbd> 전체 화면
         </p>
     </main>
 
     <!-- 짧은 안내 메시지 -->
     <div id="toast" role="status" aria-live="polite"></div>
+
+    <!-- ===== 테마 선택 창 ===== -->
+    <!-- 창 바깥을 누르면 닫히게 하는 투명한 층 -->
+    <div id="themeBackdrop" hidden></div>
+    <div id="themePanel" role="dialog" aria-modal="true" aria-labelledby="themeTitle" hidden>
+        <div class="panel-head">
+            <div>
+                <h2 id="themeTitle">테마 선택</h2>
+                <p>누르면 바로 바뀌어요<span class="kbd-hint"> · 키보드 <kbd>T</kbd>로 다음 테마</span></p>
+            </div>
+            <button id="themeClose" class="icon-btn" aria-label="닫기">✕</button>
+        </div>
+        <!-- 테마 카드들은 자바스크립트가 THEMES 목록으로 만들어 넣음 -->
+        <div id="themeGroups"></div>
+    </div>
 
     <script>
         // =================================================================
@@ -807,6 +1155,24 @@
         const MAX_PRESETS     = 12;                                // 프리셋 최대 개수
         const DEFAULT_PRESETS = [60, 180, 300, 600, 900, 1800, 3000]; // 기본 프리셋(초 단위)
         const DEFAULT_THEME   = 'night';                           // 기본 색상 테마
+
+        // 테마 목록 (id는 위 CSS의 data-theme 이름과 같아야 함)
+        // group: 테마 선택 창에서 묶어 보여 줄 제목
+        // 테마를 추가하려면 CSS에 색 묶음을 하나 만들고 여기에 한 줄 추가
+        const THEMES = [
+            { id: 'night',    name: '밤하늘',      group: '어두운 테마' },
+            { id: 'aurora',   name: '오로라',      group: '어두운 테마' },
+            { id: 'gold',     name: '샴페인 골드', group: '어두운 테마' },
+            { id: 'forest',   name: '숲',          group: '어두운 테마' },
+            { id: 'lavender', name: '라벤더',      group: '어두운 테마' },
+            { id: 'sunset',   name: '노을',        group: '어두운 테마' },
+            { id: 'chalk',    name: '칠판',        group: '어두운 테마' },
+            { id: 'mint',     name: '클래식 민트', group: '어두운 테마' },
+            { id: 'light',    name: '종이',        group: '밝은 테마' },
+            { id: 'sakura',   name: '벚꽃',        group: '밝은 테마' },
+            { id: 'sky',      name: '하늘',        group: '밝은 테마' },
+            { id: 'contrast', name: '고대비',      group: '멀리서도 잘 보이게' },
+        ];
 
         // 모의고사 과목별 실제 시험 시간(분)
         // 과목을 더하거나 시간을 바꾸려면 이 목록만 고치면 됨
@@ -837,13 +1203,14 @@
             savePresetBtn: $('savePresetBtn'),
             editPresetBtn: $('editPresetBtn'), restorePresetBtn: $('restorePresetBtn'),
             soundOn: $('soundOn'), fullscreenBtn: $('fullscreenBtn'),
-            themeBtn: $('themeBtn'), themeMenu: $('themeMenu'), themeColorMeta: $('themeColorMeta'),
+            themeBtn: $('themeBtn'), themeName: $('themeName'), themeColorMeta: $('themeColorMeta'),
+            themePanel: $('themePanel'), themeBackdrop: $('themeBackdrop'),
+            themeClose: $('themeClose'), themeGroups: $('themeGroups'),
             currentTime: $('currentTime'), dateInfo: $('dateInfo'), yearInfo: $('yearInfo'),
             toast: $('toast'),
         };
         const timeInputs  = [el.hours, el.minutes, el.seconds];
         const modeButtons = document.querySelectorAll('.mode-switch button');
-        const swatches    = document.querySelectorAll('.swatch');
         const presetTabs  = document.querySelectorAll('.preset-tabs .tab');
 
         // =================================================================
@@ -863,6 +1230,7 @@
             presets: [...DEFAULT_PRESETS], // 프리셋 목록(초 단위)
             editingPresets: false,         // 프리셋 편집 중인지
             presetTab: 'mine',             // 보고 있는 프리셋 탭: 'mine'(자주 쓰는 시간) / 'exam'(모의고사)
+            themeHinted: false,            // 테마 버튼 안내를 이미 보여 줬는지
             // 마지막으로 고른 "기준 시간". OMR 5분 제외를 켜고 끌 때 이 시간을 기준으로 계산함
             //  { sec: 기준 시간(초), name: 모의고사 과목 이름 또는 null }
             //  직접 시간을 고치면 null이 됨
@@ -1548,27 +1916,105 @@
         // =================================================================
         // 12. 색상 테마
         // =================================================================
-        function applyTheme(name) {
-            // 모르는 이름이면 기본 테마로
-            if (![...swatches].some(s => s.dataset.theme === name)) name = DEFAULT_THEME;
-            S.theme = name;
-            document.documentElement.dataset.theme = name;
-            swatches.forEach(s => s.classList.toggle('active', s.dataset.theme === name));
-            // 휴대폰 주소창 색도 배경색에 맞춤
+        // 테마 선택 창 안의 카드들을 THEMES 목록으로 만들기 (처음 한 번만)
+        //  카드의 미리보기 칸에 data-theme를 붙이면 CSS가 그 테마 색으로 그려 줌
+        function buildThemeCards() {
+            const groups = [...new Set(THEMES.map(t => t.group))];   // 묶음 제목 (중복 없이)
+            groups.forEach(group => {
+                const title = document.createElement('div');
+                title.className = 'theme-group-title';
+                title.textContent = group;
+                const grid = document.createElement('div');
+                grid.className = 'theme-grid';
+                THEMES.filter(t => t.group === group).forEach(t => {
+                    const card = document.createElement('button');
+                    card.className = 'theme-card';
+                    card.dataset.id = t.id;
+                    card.setAttribute('aria-label', `${t.name} 테마`);
+                    card.innerHTML =
+                        `<span class="preview" data-theme="${t.id}">` +
+                            `<span class="pv-num">12<small>분</small>30<small>초</small></span>` +
+                            `<span class="pv-bar"></span>` +
+                        `</span>` +
+                        `<span class="name">${t.name}<span class="check">✓</span></span>`;
+                    card.addEventListener('click', () => {
+                        setThemeSmooth(t.id);
+                        saveSettings();
+                    });
+                    grid.appendChild(card);
+                });
+                el.themeGroups.append(title, grid);
+            });
+        }
+
+        // 테마 적용: 화면 색, 버튼의 테마 이름, 선택 표시, 휴대폰 주소창 색
+        function applyTheme(id) {
+            const theme = THEMES.find(t => t.id === id) || THEMES.find(t => t.id === DEFAULT_THEME);
+            S.theme = theme.id;
+            document.documentElement.dataset.theme = theme.id;
+            el.themeName.textContent = theme.name;
+            el.themeGroups.querySelectorAll('.theme-card').forEach(card =>
+                card.classList.toggle('active', card.dataset.id === theme.id));
             el.themeColorMeta.content =
                 getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
         }
-        // 🎨 버튼: 색 견본 메뉴 열고 닫기
-        el.themeBtn.addEventListener('click', () => { el.themeMenu.hidden = !el.themeMenu.hidden; });
-        swatches.forEach(s => s.addEventListener('click', () => {
-            applyTheme(s.dataset.theme);
+
+        // 화면 전체가 부드럽게 바뀌도록 적용 (지원하는 브라우저에서만, 아니면 바로 바뀜)
+        function setThemeSmooth(id) {
+            if (!THEMES.some(t => t.id === id)) id = DEFAULT_THEME;
+            // 부드러운 전환은 아주 잠깐 뒤에 실제로 적용되므로,
+            // 바로 다음에 저장(saveSettings)해도 새 테마가 저장되도록 먼저 기록해 둠
+            S.theme = id;
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (document.startViewTransition && !reduceMotion) {
+                document.startViewTransition(() => applyTheme(id));
+            } else {
+                applyTheme(id);
+            }
+        }
+
+        // T 키: 다음 테마로 넘기기
+        function nextTheme() {
+            const i = THEMES.findIndex(t => t.id === S.theme);
+            const next = THEMES[(i + 1) % THEMES.length];
+            setThemeSmooth(next.id);
             saveSettings();
-            el.themeMenu.hidden = true;
-        }));
-        // 메뉴 바깥을 누르면 닫기
-        document.addEventListener('click', (e) => {
-            if (!el.themeMenu.hidden && !e.target.closest('.menu-wrap')) el.themeMenu.hidden = true;
+            showToast(`테마: ${next.name}`);
+        }
+
+        // 테마 선택 창 열기/닫기
+        function openThemePanel() {
+            el.themePanel.hidden = false;
+            el.themeBackdrop.hidden = false;
+            el.themeBtn.classList.remove('hint');
+            el.themeBtn.setAttribute('aria-expanded', 'true');
+            // 지금 테마 카드가 보이도록 스크롤
+            const active = el.themeGroups.querySelector('.theme-card.active');
+            if (active) active.scrollIntoView({ block: 'nearest' });
+        }
+        function closeThemePanel() {
+            el.themePanel.hidden = true;
+            el.themeBackdrop.hidden = true;
+            el.themeBtn.setAttribute('aria-expanded', 'false');
+        }
+        el.themeBtn.addEventListener('click', () => {
+            if (el.themePanel.hidden) openThemePanel(); else closeThemePanel();
         });
+        el.themeClose.addEventListener('click', closeThemePanel);
+        el.themeBackdrop.addEventListener('click', closeThemePanel);
+
+        // 처음 방문한 사람에게 한 번만: 테마 버튼이 빛나며 안내 메시지
+        function showThemeHintOnce() {
+            if (S.themeHinted) return;
+            S.themeHinted = true;
+            saveSettings();
+            setTimeout(() => {
+                el.themeBtn.classList.add('hint');
+                showToast('🎨 오른쪽 위 ‘테마’에서 화면 색을 바꿀 수 있어요');
+            }, 800);
+            // 빛나는 효과는 몇 번 반복 후 저절로 멈춤 → 클래스도 정리
+            setTimeout(() => el.themeBtn.classList.remove('hint'), 7000);
+        }
 
         // =================================================================
         // 13. 종료 알림음 (삐삐삐 - 삐삐삐)
@@ -1638,7 +2084,7 @@
                         return;
                     }
                     document.body.classList.add('hide-ui');
-                    el.themeMenu.hidden = true;     // 열려 있던 색상 메뉴도 닫기
+                    closeThemePanel();              // 열려 있던 테마 선택 창도 닫기
                 }, HIDE_UI_DELAY);
             }
         }
@@ -1693,6 +2139,7 @@
                     sound: el.soundOn.checked,   // 알림음 켜짐 여부
                     theme: S.theme,              // 색상 테마
                     tab: S.presetTab,            // 보고 있던 프리셋 탭
+                    themeHinted: S.themeHinted,  // 테마 안내를 이미 보여 줬는지
                 }));
             } catch (e) {}
         }
@@ -1704,6 +2151,8 @@
                     el.soundOn.checked = data.sound !== false;
                     if (data.theme) S.theme = data.theme;
                     if (data.tab)   S.presetTab = data.tab;
+                    // 예전에 테마를 바꿔 본 적이 있으면 이미 아는 것으로 보고 안내 생략
+                    S.themeHinted = data.themeHinted === true || (data.theme && data.theme !== DEFAULT_THEME);
                 }
             } catch (e) {}
         }
@@ -1792,7 +2241,7 @@
         // 키보드 단축키 (한글 입력 상태에서도 동작하도록 ㄱ, ㄹ도 인식)
         document.addEventListener('keydown', (e) => {
             wakeUI();
-            if (e.key === 'Escape') el.themeMenu.hidden = true;
+            if (e.key === 'Escape') closeThemePanel();
             // 입력칸 안에서는 숫자 입력이 우선. Enter = 시작, Esc = 입력 끝내기
             if (e.target.matches('input[type=number]')) {
                 if (e.key === 'Enter')       { e.target.blur(); toggleMain(); }
@@ -1804,6 +2253,8 @@
             if (e.code === 'Space') {
                 e.preventDefault();                     // 화면 스크롤 방지
                 toggleMain();
+            } else if (key === 't' || key === 'ㅅ') {
+                nextTheme();                            // 다음 테마로
             } else if (key === 'l' || key === 'ㅣ') {
                 recordLap();                            // 스톱워치 구간 기록
             } else if (key === 'r' || key === 'ㄱ') {
@@ -1829,7 +2280,9 @@
         loadPresets();                      // 저장된 프리셋 불러오기
         buildExamPresets();                 // 모의고사 과목 버튼 만들기
         setPresetTab(S.presetTab);          // 지난번 보던 프리셋 탭 열기
+        buildThemeCards();                  // 테마 선택 창의 카드 만들기
         applyTheme(S.theme);                // 색상 테마 적용
+        showThemeHintOnce();                // 처음 방문이면 테마 버튼 안내
         updateClock();
         setInterval(updateClock, 100);
         setState('idle');                   // 버튼·화면 초기 정리
